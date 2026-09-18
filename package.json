@@ -1,21 +1,10 @@
 {
-  "name": "CodeAtlas",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "codeatlas",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "12.4.2",
-      "onFail": "download"
-    }
-  },
-  "packageManager": "pnpm@12.4.2",
-  "type": "module"
+    "build:shared": "pnpm --filter @codeatlas/shared build",
+    "dev:api": "pnpm --filter @codeatlas/api dev",
+    "dev:web": "pnpm --filter @codeatlas/web dev"
+  }
 }
