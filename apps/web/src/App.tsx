@@ -1,31 +1,40 @@
-import { useEffect, useState } from "react";
-import type { HealthCheckResponse } from "@codeatlas/shared";
+import { useAuth } from "./context/AuthContext";
 
 export default function App() {
-  const [health, setHealth] = useState<HealthCheckResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/health")
-      .then((res) => res.json())
-      .then((data: HealthCheckResponse) => setHealth(data))
-      .catch(() => setError("Could not reach the API"));
-  }, []);
+  const { user, loading, login, logout } = useAuth();
 
   return (
     <main className="min-h-screen grid place-items-center bg-base-200">
-      <div className="card bg-base-100 shadow-lg max-w-md">
-        <div className="card-body">
+      <div className="card bg-base-100 shadow-lg w-96">
+        <div className="card-body items-center text-center">
           <h1 className="card-title">CodeAtlas</h1>
-          {error && <p className="text-error">{error}</p>}
-          {health && (
-            <p>
-              API status: <span className="badge badge-success">{health.status}</span>
-              <br />
-              <span className="text-sm opacity-70">{health.timestamp}</span>
-            </p>
+
+          {loading && <span className="loading loading-spinner" />}
+
+          {!loading && !user && (
+            <>
+              <p className="opacity-70 text-sm">
+                Ask questions about any GitHub repo, grounded in the actual code.
+              </p>
+              <button className="btn btn-primary mt-2" onClick={login}>
+                Sign in with GitHub
+              </button>
+            </>
           )}
-          {!health && !error && <span className="loading loading-spinner" />}
+
+          {!loading && user && (
+            <>
+              <img
+                src={user.avatarUrl}
+                alt={user.username}
+                className="w-16 h-16 rounded-full"
+              />
+              <p className="font-semibold">{user.username}</p>
+              <button className="btn btn-outline btn-sm mt-2" onClick={logout}>
+                Sign out
+              </button>
+            </>
+          )}
         </div>
       </div>
     </main>

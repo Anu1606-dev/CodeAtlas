@@ -1,15 +1,20 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import type { HealthCheckResponse } from "@codeatlas/shared";
+import { connectDB } from "./db.js";
+import authRouter from "./routes/auth.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
+const CLIENT_URL = process.env.CLIENT_URL ?? "http://localhost:5173";
 
-app.use(cors({ origin: process.env.CLIENT_URL ?? "http://localhost:5173" }));
+app.use(cors({ origin: CLIENT_URL, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/api/health", (_req, res) => {
   const body: HealthCheckResponse = {
@@ -19,6 +24,16 @@ app.get("/api/health", (_req, res) => {
   res.json(body);
 });
 
-app.listen(PORT, () => {
-  console.log(`CodeAtlas API running on http://localhost:${PORT}`);
+app.use("/api/auth", authRouter);
+
+async function start(): Promise<void> {
+  await connectDB();
+  app.listen(PORT, () => {
+    console.log(`CodeAtlas API running on http://localhost:${PORT}`);
+  });
+}
+
+start().catch((err) => {
+  console.error("Failed to start server:", err);
+  process.exit(1);
 });
