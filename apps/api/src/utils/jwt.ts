@@ -1,18 +1,29 @@
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not set in environment variables");
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is not set in environment variables`);
+  }
+  return value;
 }
 
-export interface JwtPayload {
+const JWT_SECRET = requireEnv("JWT_SECRET");
+
+export interface TokenPayload {
   userId: string;
 }
 
-export function signToken(payload: JwtPayload): string {
+export function signToken(payload: TokenPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 }
 
-export function verifyToken(token: string): JwtPayload {
-  return jwt.verify(token, JWT_SECRET) as JwtPayload;
+export function verifyToken(token: string): TokenPayload {
+  const decoded = jwt.verify(token, JWT_SECRET);
+
+  if (typeof decoded === "string" || !("userId" in decoded)) {
+    throw new Error("Invalid token payload");
+  }
+
+  return decoded as TokenPayload;
 }
