@@ -67,3 +67,15 @@ export interface SearchTestResponse {
   query: string;
   results: SearchResultChunk[];
 }
+
+export interface ChatCitation {
+  index: number;
+  filePath: string;
+  lines: string;
+  symbolName?: string;
+}
+
+export interface ChatResponse {
+  answer: string;
+  citations: ChatCitation[];
+}

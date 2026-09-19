@@ -7,6 +7,7 @@ import { connectDB } from "./db.js";
 import authRouter from "./routes/auth.js";
 import reposRouter from "./routes/repos.js";
 import indexingRouter from "./routes/indexing.js";
+import chatRouter from "./routes/chat.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/repos", reposRouter);
 app.use("/api/index", indexingRouter);
+app.use("/api/chat", chatRouter);
 
 async function start(): Promise<void> {
   await connectDB();

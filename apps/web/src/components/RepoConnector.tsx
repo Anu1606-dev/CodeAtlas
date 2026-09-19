@@ -7,6 +7,7 @@ import type {
   SearchTestResponse,
 } from "@codeatlas/shared";
 import { apiGet, apiPost } from "../lib/api";
+import ChatPanel from "./ChatPanel";
 
 export default function RepoConnector() {
   const [connectedRepos, setConnectedRepos] = useState<ConnectedRepo[] | null>(null);
@@ -140,6 +141,8 @@ export default function RepoConnector() {
           </div>
         )}
 
+        <ChatPanel repoId={repo.id} />
+
         <div className="divider text-xs opacity-50">chunking debug</div>
 
         <div className="flex gap-2">
@@ -179,7 +182,7 @@ export default function RepoConnector() {
         <div className="flex gap-2">
           <input
             type="text"
-            placeholder="Ask something about this repo..."
+            placeholder="Raw vector search (no LLM)..."
             className="input input-sm input-bordered flex-1"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

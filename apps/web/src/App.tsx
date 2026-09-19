@@ -6,7 +6,7 @@ export default function App() {
 
   return (
     <main className="min-h-screen grid place-items-center bg-base-200 p-4">
-      <div className="card bg-base-100 shadow-lg w-96">
+      <div className={`card bg-base-100 shadow-lg ${user ? "w-full max-w-2xl" : "w-96"}`}>
         <div className="card-body items-center text-center">
           <h1 className="card-title">CodeAtlas</h1>
 
@@ -25,8 +25,10 @@ export default function App() {
 
           {!loading && user && (
             <div className="w-full flex flex-col items-center gap-3">
-              <img src={user.avatarUrl} alt={user.username} className="w-16 h-16 rounded-full" />
-              <p className="font-semibold">{user.username}</p>
+              <div className="flex items-center gap-2 self-start">
+                <img src={user.avatarUrl} alt={user.username} className="w-8 h-8 rounded-full" />
+                <p className="font-semibold text-sm">{user.username}</p>
+              </div>
 
               <RepoConnector />
 
