@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import type { HealthCheckResponse } from "@codeatlas/shared";
 import { connectDB } from "./db.js";
 import authRouter from "./routes/auth.js";
+import reposRouter from "./routes/repos.js";
+import indexingRouter from "./routes/indexing.js";
 
 dotenv.config();
 
@@ -17,14 +19,13 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get("/api/health", (_req, res) => {
-  const body: HealthCheckResponse = {
-    status: "ok",
-    timestamp: new Date().toISOString(),
-  };
+  const body: HealthCheckResponse = { status: "ok", timestamp: new Date().toISOString() };
   res.json(body);
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/repos", reposRouter);
+app.use("/api/index", indexingRouter);
 
 async function start(): Promise<void> {
   await connectDB();

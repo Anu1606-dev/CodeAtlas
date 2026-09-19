@@ -1,10 +1,11 @@
 import { useAuth } from "./context/AuthContext";
+import RepoConnector from "./components/RepoConnector";
 
 export default function App() {
   const { user, loading, login, logout } = useAuth();
 
   return (
-    <main className="min-h-screen grid place-items-center bg-base-200">
+    <main className="min-h-screen grid place-items-center bg-base-200 p-4">
       <div className="card bg-base-100 shadow-lg w-96">
         <div className="card-body items-center text-center">
           <h1 className="card-title">CodeAtlas</h1>
@@ -23,17 +24,16 @@ export default function App() {
           )}
 
           {!loading && user && (
-            <>
-              <img
-                src={user.avatarUrl}
-                alt={user.username}
-                className="w-16 h-16 rounded-full"
-              />
+            <div className="w-full flex flex-col items-center gap-3">
+              <img src={user.avatarUrl} alt={user.username} className="w-16 h-16 rounded-full" />
               <p className="font-semibold">{user.username}</p>
+
+              <RepoConnector />
+
               <button className="btn btn-outline btn-sm mt-2" onClick={logout}>
                 Sign out
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>
