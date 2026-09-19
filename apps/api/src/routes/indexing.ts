@@ -27,15 +27,23 @@ router.post("/:repoId/preview", requireAuth, async (req: AuthedRequest, res) => 
     return;
   }
 
+  const filter = typeof req.body?.filter === "string" ? req.body.filter.trim().toLowerCase() : "";
+
   let snapshot: Awaited<ReturnType<typeof fetchRepoSnapshot>> | null = null;
 
   try {
     snapshot = await fetchRepoSnapshot(repo.owner, repo.name, repo.defaultBranch, user.githubAccessToken);
     const chunks: CodeChunkResult[] = await chunkRepo(snapshot.rootDir);
-    const sampled = sampleEvenly(chunks, 8);
+
+    const matched = filter
+      ? chunks.filter((c) => c.filePath.toLowerCase().includes(filter))
+      : chunks;
+
+    const sampled = sampleEvenly(matched, 8);
 
     const body: IndexPreviewResponse = {
       totalChunks: chunks.length,
+      matchedChunks: matched.length,
       sample: sampled.map((c) => ({
         filePath: c.filePath,
         language: c.language,

@@ -43,5 +43,6 @@ export interface IndexPreviewChunk {
 
 export interface IndexPreviewResponse {
   totalChunks: number;
+  matchedChunks: number;
   sample: IndexPreviewChunk[];
 }
