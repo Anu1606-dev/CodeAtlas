@@ -8,25 +8,30 @@ import type { AuthUser } from "@codeatlas/shared";
 
 const router = Router();
 
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID!;
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET!;
-const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL!;
-const CLIENT_URL = process.env.CLIENT_URL ?? "http://localhost:5173";
-const isProd = process.env.NODE_ENV === "production";
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is not set in environment variables`);
+  }
+  return value;
+}
 
-const cookieOptions: CookieOptions = {
-  httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? "none" : "lax",
-};
+function getCookieOptions(): CookieOptions {
+  const isProd = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+  };
+}
 
 router.get("/github", (_req, res) => {
   const state = crypto.randomBytes(16).toString("hex");
-  res.cookie("oauth_state", state, { ...cookieOptions, maxAge: 5 * 60 * 1000 });
+  res.cookie("oauth_state", state, { ...getCookieOptions(), maxAge: 5 * 60 * 1000 });
 
   const params = new URLSearchParams({
-    client_id: GITHUB_CLIENT_ID,
-    redirect_uri: GITHUB_CALLBACK_URL,
+    client_id: requireEnv("GITHUB_CLIENT_ID"),
+    redirect_uri: requireEnv("GITHUB_CALLBACK_URL"),
     scope: "repo",
     state,
   });
@@ -37,6 +42,8 @@ router.get("/github", (_req, res) => {
 router.get("/github/callback", async (req, res) => {
   const { code, state } = req.query;
   const savedState = req.cookies?.oauth_state as string | undefined;
+  const cookieOptions = getCookieOptions();
+  const CLIENT_URL = process.env.CLIENT_URL ?? "http://localhost:5173";
   res.clearCookie("oauth_state", cookieOptions);
 
   if (!code || typeof code !== "string" || !state || state !== savedState) {
@@ -49,10 +56,10 @@ router.get("/github/callback", async (req, res) => {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        client_id: GITHUB_CLIENT_ID,
-        client_secret: GITHUB_CLIENT_SECRET,
+        client_id: requireEnv("GITHUB_CLIENT_ID"),
+        client_secret: requireEnv("GITHUB_CLIENT_SECRET"),
         code,
-        redirect_uri: GITHUB_CALLBACK_URL,
+        redirect_uri: requireEnv("GITHUB_CALLBACK_URL"),
       }),
     });
 
@@ -118,7 +125,7 @@ router.get("/me", requireAuth, async (req: AuthedRequest, res) => {
 });
 
 router.post("/logout", (_req, res) => {
-  res.clearCookie("token", cookieOptions);
+  res.clearCookie("token", getCookieOptions());
   res.json({ success: true });
 });
 
