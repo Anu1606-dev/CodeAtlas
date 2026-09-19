@@ -6,7 +6,11 @@ import { requireAuth, type AuthedRequest } from "../middleware/requireAuth.js";
 import { fetchRepoSnapshot } from "../services/githubFetch.js";
 import { chunkRepo, type CodeChunkResult } from "../services/chunker.js";
 import { embedTexts } from "../services/embeddings.js";
-import type { IndexPreviewResponse, IndexRunResponse } from "@codeatlas/shared";
+import type {
+  IndexPreviewResponse,
+  IndexRunResponse,
+  SearchTestResponse,
+} from "@codeatlas/shared";
 
 const router = Router();
 
@@ -129,6 +133,66 @@ router.post("/:repoId/run", requireAuth, async (req: AuthedRequest, res) => {
     res.status(500).json({ error: "Failed to index repository" });
   } finally {
     await snapshot?.cleanup();
+  }
+});
+
+router.post("/:repoId/search-test", requireAuth, async (req: AuthedRequest, res) => {
+  const repo = await Repo.findOne({ _id: req.params.repoId, userId: req.userId });
+  if (!repo) {
+    res.status(404).json({ error: "Repo not found" });
+    return;
+  }
+
+  const query = typeof req.body?.query === "string" ? req.body.query.trim() : "";
+  if (!query) {
+    res.status(400).json({ error: "Missing query" });
+    return;
+  }
+
+  try {
+    const [queryEmbedding] = await embedTexts([query], "RETRIEVAL_QUERY");
+
+    const results = await Chunk.aggregate([
+      {
+        $vectorSearch: {
+          index: "vector_index",
+          path: "embedding",
+          queryVector: queryEmbedding,
+          numCandidates: 150,
+          limit: 8,
+          filter: { repoId: repo._id },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          filePath: 1,
+          language: 1,
+          startLine: 1,
+          endLine: 1,
+          symbolName: 1,
+          content: 1,
+          score: { $meta: "vectorSearchScore" },
+        },
+      },
+    ]);
+
+    const body: SearchTestResponse = {
+      query,
+      results: results.map((r) => ({
+        filePath: r.filePath,
+        language: r.language,
+        lines: `${r.startLine}-${r.endLine}`,
+        symbolName: r.symbolName,
+        content: r.content.slice(0, 400),
+        score: r.score,
+      })),
+    };
+
+    res.json(body);
+  } catch (err) {
+    console.error("Search test failed:", err);
+    res.status(500).json({ error: "Search failed — check that the vector index exists and is Active" });
   }
 });
 

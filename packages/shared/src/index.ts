@@ -53,3 +53,17 @@ export interface IndexRunResponse {
   chunksIndexed: number;
   tookMs: number;
 }
+
+export interface SearchResultChunk {
+  filePath: string;
+  language: string;
+  lines: string;
+  symbolName?: string;
+  content: string;
+  score: number;
+}
+
+export interface SearchTestResponse {
+  query: string;
+  results: SearchResultChunk[];
+}
