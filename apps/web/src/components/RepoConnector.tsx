@@ -10,6 +10,9 @@ export default function RepoConnector() {
     const [previewing, setPreviewing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [filterText, setFilterText] = useState("");
+    const [indexing, setIndexing] = useState(false);
+    const [indexResult, setIndexResult] = useState<{ chunksIndexed: number; tookMs: number } | null>(null);
+
 
     useEffect(() => {
         apiGet<ConnectedRepo[]>("/api/repos")
@@ -54,6 +57,31 @@ export default function RepoConnector() {
         }
     }
 
+    async function handleRunIndex(repoId: string) {
+        setIndexing(true);
+        setError(null);
+        setIndexResult(null);
+        try {
+            const result = await apiPost<{ chunksIndexed: number; tookMs: number }>(
+                `/api/index/${repoId}/run`
+            );
+            setIndexResult(result);
+            setConnectedRepos((prev) =>
+                prev
+                    ? prev.map((r) =>
+                        r.id === repoId
+                            ? { ...r, chunkCount: result.chunksIndexed, lastIndexedAt: new Date().toISOString() }
+                            : r
+                    )
+                    : prev
+            );
+        } catch {
+            setError("Indexing failed — check the API terminal for details");
+        } finally {
+            setIndexing(false);
+        }
+    }
+
     if (connectedRepos === null) return <span className="loading loading-spinner" />;
     if (error) return <p className="text-error text-sm">{error}</p>;
 
@@ -64,7 +92,27 @@ export default function RepoConnector() {
                 <div className="alert alert-success flex-col items-start gap-1 w-full">
                     <span className="font-semibold">Connected: {repo.fullName}</span>
                     <span className="text-xs opacity-70">Default branch: {repo.defaultBranch}</span>
+                    {repo.chunkCount !== undefined && (
+                        <span className="text-xs opacity-70">
+                            Indexed: {repo.chunkCount} chunks
+                            {repo.lastIndexedAt && ` · ${new Date(repo.lastIndexedAt).toLocaleString()}`}
+                        </span>
+                    )}
                 </div>
+
+                <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => handleRunIndex(repo.id)}
+                    disabled={indexing}
+                >
+                    {indexing ? <span className="loading loading-spinner loading-xs" /> : "Run indexing"}
+                </button>
+
+                {indexResult && (
+                    <div className="alert alert-info text-xs">
+                        Indexed {indexResult.chunksIndexed} chunks in {(indexResult.tookMs / 1000).toFixed(1)}s
+                    </div>
+                )}
 
                 <div className="flex gap-2">
                     <input
@@ -100,7 +148,6 @@ export default function RepoConnector() {
             </div>
         );
     }
-
 
     return (
         <div className="w-full text-left">

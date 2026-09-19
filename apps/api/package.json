@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@codeatlas/shared": "workspace:*",
+    "@google/genai": "^2.23.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

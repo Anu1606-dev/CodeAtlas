@@ -31,6 +31,8 @@ export interface ConnectedRepo {
   private: boolean;
   htmlUrl: string;
   connectedAt: string;
+  lastIndexedAt?: string;
+  chunkCount?: number;
 }
 
 export interface IndexPreviewChunk {
@@ -45,4 +47,9 @@ export interface IndexPreviewResponse {
   totalChunks: number;
   matchedChunks: number;
   sample: IndexPreviewChunk[];
+}
+
+export interface IndexRunResponse {
+  chunksIndexed: number;
+  tookMs: number;
 }

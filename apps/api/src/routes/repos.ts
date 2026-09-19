@@ -7,8 +7,6 @@ import type { GithubRepoSummary, ConnectedRepo } from "@codeatlas/shared";
 const router = Router();
 
 router.get("/github", requireAuth, async (req: AuthedRequest, res) => {
-  // githubAccessToken has select: false on the schema, so it must be
-  // explicitly requested here.
   const user = await User.findById(req.userId).select("+githubAccessToken");
   if (!user) {
     res.status(404).json({ error: "User not found" });
@@ -56,9 +54,8 @@ router.get("/github", requireAuth, async (req: AuthedRequest, res) => {
   res.json(body);
 });
 
-router.get("/", requireAuth, async (req: AuthedRequest, res) => {
-  const repos = await Repo.find({ userId: req.userId }).sort({ connectedAt: -1 });
-  const body: ConnectedRepo[] = repos.map((r) => ({
+function toConnectedRepo(r: InstanceType<typeof Repo>): ConnectedRepo {
+  return {
     id: r._id.toString(),
     githubRepoId: r.githubRepoId,
     name: r.name,
@@ -68,7 +65,14 @@ router.get("/", requireAuth, async (req: AuthedRequest, res) => {
     private: r.private,
     htmlUrl: r.htmlUrl,
     connectedAt: r.connectedAt.toISOString(),
-  }));
+    lastIndexedAt: r.lastIndexedAt?.toISOString(),
+    chunkCount: r.chunkCount,
+  };
+}
+
+router.get("/", requireAuth, async (req: AuthedRequest, res) => {
+  const repos = await Repo.find({ userId: req.userId }).sort({ connectedAt: -1 });
+  const body: ConnectedRepo[] = repos.map(toConnectedRepo);
   res.json(body);
 });
 
@@ -97,19 +101,7 @@ router.post("/connect", requireAuth, async (req: AuthedRequest, res) => {
     { upsert: true, new: true }
   );
 
-  const body: ConnectedRepo = {
-    id: repo._id.toString(),
-    githubRepoId: repo.githubRepoId,
-    name: repo.name,
-    fullName: repo.fullName,
-    owner: repo.owner,
-    defaultBranch: repo.defaultBranch,
-    private: repo.private,
-    htmlUrl: repo.htmlUrl,
-    connectedAt: repo.connectedAt.toISOString(),
-  };
-
-  res.status(201).json(body);
+  res.status(201).json(toConnectedRepo(repo));
 });
 
 export default router;

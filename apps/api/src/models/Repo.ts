@@ -10,6 +10,8 @@ export interface IRepo extends Document {
   private: boolean;
   htmlUrl: string;
   connectedAt: Date;
+  lastIndexedAt?: Date;
+  chunkCount?: number;
 }
 
 const repoSchema = new Schema<IRepo>({
@@ -22,10 +24,10 @@ const repoSchema = new Schema<IRepo>({
   private: { type: Boolean, required: true, default: false },
   htmlUrl: { type: String, required: true },
   connectedAt: { type: Date, required: true, default: () => new Date() },
+  lastIndexedAt: { type: Date },
+  chunkCount: { type: Number },
 });
 
-// Same user can't connect the same repo twice, but two different users
-// can each independently connect the same public repo.
 repoSchema.index({ userId: 1, githubRepoId: 1 }, { unique: true });
 
 export const Repo: Model<IRepo> =
