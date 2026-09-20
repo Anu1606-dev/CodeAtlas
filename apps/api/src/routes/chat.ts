@@ -66,12 +66,21 @@ router.post("/:repoId", requireAuth, async (req: AuthedRequest, res) => {
 
     const answer = await generateGroundedAnswer(question, sources);
 
-    const citations: ChatCitation[] = sources.map((s) => ({
-      index: s.index,
-      filePath: s.filePath,
-      lines: s.lines,
-      symbolName: s.symbolName,
-    }));
+    // Only cite sources the model actually referenced by number in its
+    // answer — not everything that happened to be retrieved. A source
+    // sitting unused in the candidate pool didn't actually ground anything.
+    const citedIndices = new Set(
+      Array.from(answer.matchAll(/\[(\d+)\]/g), (m) => Number(m[1]))
+    );
+
+    const citations: ChatCitation[] = sources
+      .filter((s) => citedIndices.has(s.index))
+      .map((s) => ({
+        index: s.index,
+        filePath: s.filePath,
+        lines: s.lines,
+        symbolName: s.symbolName,
+      }));
 
     const body: ChatResponse = { answer, citations };
     res.json(body);
