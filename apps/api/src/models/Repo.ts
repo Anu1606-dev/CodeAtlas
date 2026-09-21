@@ -12,6 +12,7 @@ export interface IRepo extends Document {
   connectedAt: Date;
   lastIndexedAt?: Date;
   chunkCount?: number;
+  githubWebhookId?: number;
 }
 
 const repoSchema = new Schema<IRepo>({
@@ -26,6 +27,7 @@ const repoSchema = new Schema<IRepo>({
   connectedAt: { type: Date, required: true, default: () => new Date() },
   lastIndexedAt: { type: Date },
   chunkCount: { type: Number },
+  githubWebhookId: { type: Number },
 });
 
 repoSchema.index({ userId: 1, githubRepoId: 1 }, { unique: true });

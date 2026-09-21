@@ -2,6 +2,7 @@ import { Router } from "express";
 import { User } from "../models/User.js";
 import { Repo } from "../models/Repo.js";
 import { requireAuth, type AuthedRequest } from "../middleware/requireAuth.js";
+import { createGithubWebhook } from "../services/githubWebhook.js";
 import type { GithubRepoSummary, ConnectedRepo } from "@codeatlas/shared";
 
 const router = Router();
@@ -67,6 +68,7 @@ function toConnectedRepo(r: InstanceType<typeof Repo>): ConnectedRepo {
     connectedAt: r.connectedAt.toISOString(),
     lastIndexedAt: r.lastIndexedAt?.toISOString(),
     chunkCount: r.chunkCount,
+    webhookActive: Boolean(r.githubWebhookId),
   };
 }
 
@@ -82,6 +84,12 @@ router.post("/connect", requireAuth, async (req: AuthedRequest, res) => {
 
   if (!githubRepoId || !name || !fullName || !owner || !defaultBranch || !htmlUrl) {
     res.status(400).json({ error: "Missing required repo fields" });
+    return;
+  }
+
+  const user = await User.findById(req.userId).select("+githubAccessToken");
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
     return;
   }
 
@@ -101,7 +109,40 @@ router.post("/connect", requireAuth, async (req: AuthedRequest, res) => {
     { upsert: true, new: true }
   );
 
+  if (!repo.githubWebhookId) {
+    const webhookId = await createGithubWebhook(owner, name, user.githubAccessToken);
+    if (webhookId) {
+      repo.githubWebhookId = webhookId;
+      await repo.save();
+    }
+  }
+
   res.status(201).json(toConnectedRepo(repo));
+});
+
+router.post("/:id/enable-webhook", requireAuth, async (req: AuthedRequest, res) => {
+  const repo = await Repo.findOne({ _id: req.params.id, userId: req.userId });
+  if (!repo) {
+    res.status(404).json({ error: "Repo not found" });
+    return;
+  }
+
+  const user = await User.findById(req.userId).select("+githubAccessToken");
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const webhookId = await createGithubWebhook(repo.owner, repo.name, user.githubAccessToken);
+  if (!webhookId) {
+    res.status(502).json({ error: "Could not create webhook — check the API terminal for details" });
+    return;
+  }
+
+  repo.githubWebhookId = webhookId;
+  await repo.save();
+
+  res.json(toConnectedRepo(repo));
 });
 
 export default router;

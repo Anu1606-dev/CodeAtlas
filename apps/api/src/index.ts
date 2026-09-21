@@ -8,6 +8,7 @@ import authRouter from "./routes/auth.js";
 import reposRouter from "./routes/repos.js";
 import indexingRouter from "./routes/indexing.js";
 import chatRouter from "./routes/chat.js";
+import webhooksRouter from "./routes/webhooks.js";
 
 dotenv.config();
 
@@ -16,7 +17,13 @@ const PORT = process.env.PORT ?? 4000;
 const CLIENT_URL = process.env.CLIENT_URL ?? "http://localhost:5173";
 
 app.use(cors({ origin: CLIENT_URL, credentials: true }));
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(cookieParser());
 
 app.get("/api/health", (_req, res) => {
@@ -28,6 +35,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/repos", reposRouter);
 app.use("/api/index", indexingRouter);
 app.use("/api/chat", chatRouter);
+app.use("/api/webhooks", webhooksRouter);
 
 async function start(): Promise<void> {
   await connectDB();

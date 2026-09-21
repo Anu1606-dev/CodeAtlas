@@ -80,10 +80,10 @@ export default function RepoConnector() {
       setConnectedRepos((prev) =>
         prev
           ? prev.map((r) =>
-              r.id === repoId
-                ? { ...r, chunkCount: result.chunksIndexed, lastIndexedAt: new Date().toISOString() }
-                : r
-            )
+            r.id === repoId
+              ? { ...r, chunkCount: result.chunksIndexed, lastIndexedAt: new Date().toISOString() }
+              : r
+          )
           : prev
       );
     } catch {
@@ -124,6 +124,26 @@ export default function RepoConnector() {
               Indexed: {repo.chunkCount} chunks
               {repo.lastIndexedAt && ` · ${new Date(repo.lastIndexedAt).toLocaleString()}`}
             </span>
+          )}
+          <span className="text-xs opacity-70">
+            Auto-reindex on push: {repo.webhookActive ? "✓ Active" : "Not enabled"}
+          </span>
+          {!repo.webhookActive && (
+            <button
+              className="btn btn-xs btn-outline mt-1"
+              onClick={async () => {
+                try {
+                  const updated = await apiPost<ConnectedRepo>(`/api/repos/${repo.id}/enable-webhook`);
+                  setConnectedRepos((prev) =>
+                    prev ? prev.map((r) => (r.id === repo.id ? updated : r)) : prev
+                  );
+                } catch {
+                  setError("Could not enable auto-reindex — check the API terminal");
+                }
+              }}
+            >
+              Enable auto-reindex
+            </button>
           )}
         </div>
 

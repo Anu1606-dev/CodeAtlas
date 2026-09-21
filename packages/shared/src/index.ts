@@ -79,3 +79,18 @@ export interface ChatResponse {
   answer: string;
   citations: ChatCitation[];
 }
+
+export interface ConnectedRepo {
+  id: string;
+  githubRepoId: number;
+  name: string;
+  fullName: string;
+  owner: string;
+  defaultBranch: string;
+  private: boolean;
+  htmlUrl: string;
+  connectedAt: string;
+  lastIndexedAt?: string;
+  chunkCount?: number;
+  webhookActive: boolean;
+}
