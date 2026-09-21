@@ -20,7 +20,7 @@ app.use(cors({ origin: CLIENT_URL, credentials: true }));
 app.use(
   express.json({
     verify: (req, _res, buf) => {
-      req.rawBody = buf;
+      (req as typeof req & { rawBody?: Buffer }).rawBody = buf;
     },
   })
 );
