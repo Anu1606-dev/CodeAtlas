@@ -17,14 +17,21 @@ const PORT = process.env.PORT ?? 4000;
 const CLIENT_URL = process.env.CLIENT_URL ?? "http://localhost:5173";
 
 app.use(cors({ origin: CLIENT_URL, credentials: true }));
+
 app.use(
   express.json({
     verify: (req, _res, buf) => {
-      (req as typeof req & { rawBody?: Buffer }).rawBody = buf;
+      (req as express.Request).rawBody = buf;
     },
   })
 );
+
 app.use(cookieParser());
+
+app.use("/api", (_req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
 
 app.get("/api/health", (_req, res) => {
   const body: HealthCheckResponse = { status: "ok", timestamp: new Date().toISOString() };
