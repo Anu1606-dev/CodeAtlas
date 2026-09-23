@@ -2,6 +2,7 @@ import { MessageSquare, FileSearch, Search, Network } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import Logo from "../components/Logo";
 
 const features = [
   { icon: MessageSquare, label: "Chat with your code" },
@@ -25,7 +26,7 @@ export default function LandingPage() {
     <main className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded bg-linear-to-br from-primary to-accent" />
+          <Logo className="h-7 w-auto" />
           <span className="font-bold text-lg">CodeAtlas</span>
         </div>
         <ThemeToggle />
