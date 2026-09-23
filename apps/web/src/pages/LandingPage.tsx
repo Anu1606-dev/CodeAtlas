@@ -25,7 +25,7 @@ export default function LandingPage() {
     <main className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded bg-gradient-to-br from-primary to-accent" />
+          <div className="w-7 h-7 rounded bg-linear-to-br from-primary to-accent" />
           <span className="font-bold text-lg">CodeAtlas</span>
         </div>
         <ThemeToggle />
