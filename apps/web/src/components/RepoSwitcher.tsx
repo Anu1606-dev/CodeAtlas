@@ -43,16 +43,15 @@ export default function RepoSwitcher() {
 
     return (
         <DropdownMenu
-            open={open}
             onOpenChange={(v) => {
-                setOpen(v);
                 if (!v) setShowPicker(false);
             }}
         >
             <DropdownMenuTrigger render={<Button variant="outline" className="w-full justify-between" />}>
                 <span className="truncate">{selectedRepo?.name ?? "Select a repo"}</span>
                 <ChevronDown size={14} />
-            </DropdownMenuTrigger>      <DropdownMenuContent className="w-56">
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
                 {repos.map((r) => (
                     <DropdownMenuItem
                         key={r.id}
