@@ -1,44 +1,47 @@
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "./context/AuthContext";
-import RepoConnector from "./components/RepoConnector";
+import { RepoProvider } from "./context/RepoContext";
+import LandingPage from "./pages/LandingPage";
+import AppLayout from "./layouts/AppLayout";
+import ChatPage from "./pages/ChatPage";
+
+function PlaceholderPage({ title }: { title: string }) {
+  return (
+    <div className="p-8 text-center text-muted-foreground">
+      <p className="text-lg font-semibold">{title}</p>
+      <p className="text-sm mt-1">Coming in the next build step.</p>
+    </div>
+  );
+}
 
 export default function App() {
-  const { user, loading, login, logout } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-background">
+        <Loader2 className="animate-spin" size={32} />
+      </div>
+    );
+  }
+
+  if (!user) return <LandingPage />;
 
   return (
-    <main className="min-h-screen grid place-items-center bg-base-200 p-4">
-      <div className={`card bg-base-100 shadow-lg ${user ? "w-full max-w-2xl" : "w-96"}`}>
-        <div className="card-body items-center text-center">
-          <h1 className="card-title">CodeAtlas</h1>
-
-          {loading && <span className="loading loading-spinner" />}
-
-          {!loading && !user && (
-            <>
-              <p className="opacity-70 text-sm">
-                Ask questions about any GitHub repo, grounded in the actual code.
-              </p>
-              <button className="btn btn-primary mt-2" onClick={login}>
-                Sign in with GitHub
-              </button>
-            </>
-          )}
-
-          {!loading && user && (
-            <div className="w-full flex flex-col items-center gap-3">
-              <div className="flex items-center gap-2 self-start">
-                <img src={user.avatarUrl} alt={user.username} className="w-8 h-8 rounded-full" />
-                <p className="font-semibold text-sm">{user.username}</p>
-              </div>
-
-              <RepoConnector />
-
-              <button className="btn btn-outline btn-sm mt-2" onClick={logout}>
-                Sign out
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </main>
+    <RepoProvider>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Navigate to="/chat" replace />} />
+          <Route path="/overview" element={<PlaceholderPage title="Overview" />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/files" element={<PlaceholderPage title="Files" />} />
+          <Route path="/search" element={<PlaceholderPage title="Search" />} />
+          <Route path="/tools/chunks" element={<PlaceholderPage title="Chunk Explorer" />} />
+          <Route path="/tools/vectors" element={<PlaceholderPage title="Vector Search" />} />
+          <Route path="*" element={<Navigate to="/chat" replace />} />
+        </Route>
+      </Routes>
+    </RepoProvider>
   );
 }
