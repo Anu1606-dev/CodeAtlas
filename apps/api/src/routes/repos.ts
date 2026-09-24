@@ -5,6 +5,7 @@ import { requireAuth, type AuthedRequest } from "../middleware/requireAuth.js";
 import { createGithubWebhook } from "../services/githubWebhook.js";
 import type { GithubRepoSummary, ConnectedRepo } from "@codeatlas/shared";
 import { Chunk } from "../models/Chunk.js";
+import { GraphEdge } from "../models/GraphEdge.js";
 
 const router = Router();
 
@@ -161,6 +162,27 @@ router.get("/:id/files", requireAuth, async (req: AuthedRequest, res) => {
   ]);
 
   res.json(files.map((f) => ({ filePath: f._id, language: f.language, chunkCount: f.chunkCount })));
+});
+
+router.get("/:id/graph", requireAuth, async (req: AuthedRequest, res) => {
+  const repo = await Repo.findOne({ _id: req.params.id, userId: req.userId });
+  if (!repo) {
+    res.status(404).json({ error: "Repo not found" });
+    return;
+  }
+
+  const [edges, files] = await Promise.all([
+    GraphEdge.find({ repoId: repo._id }),
+    Chunk.aggregate([{ $match: { repoId: repo._id } }, { $group: { _id: "$filePath" } }]),
+  ]);
+
+  const nodes = files.map((f) => {
+    const fp = f._id as string;
+    const parts = fp.split("/");
+    return { id: fp, label: parts[parts.length - 1], group: parts.length > 1 ? parts[0] : "root" };
+  });
+
+  res.json({ nodes, edges: edges.map((e) => ({ source: e.from, target: e.to })) });
 });
 
 export default router;

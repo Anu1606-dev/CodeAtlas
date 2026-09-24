@@ -116,3 +116,17 @@ export interface ChunksPageResponse {
   pageSize: number;
   chunks: StoredChunk[];
 }
+
+export interface GraphNode {
+  id: string;
+  label: string;
+  group: string;
+}
+export interface GraphEdgeDTO {
+  source: string;
+  target: string;
+}
+export interface RepoGraphResponse {
+  nodes: GraphNode[];
+  edges: GraphEdgeDTO[];
+}

@@ -4,6 +4,8 @@ import { Chunk } from "../models/Chunk.js";
 import { fetchRepoSnapshot } from "./githubFetch.js";
 import { chunkRepo, type CodeChunkResult } from "./chunker.js";
 import { embedTexts } from "./embeddings.js";
+import { buildDependencyGraph } from "./depGraph.js";
+import { GraphEdge } from "../models/GraphEdge.js";
 
 export interface IndexJobResult {
   chunksIndexed: number;
@@ -63,6 +65,12 @@ export async function runIndexJob(repoId: string): Promise<IndexJobResult> {
     );
 
     const fileCount = new Set(chunks.map((c) => c.filePath)).size;
+    const uniqueFilePaths = [...new Set(chunks.map((c) => c.filePath))];
+    const edges = await buildDependencyGraph(snapshot.rootDir, uniqueFilePaths);
+    await GraphEdge.deleteMany({ repoId: repo._id });
+    if (edges.length > 0) {
+      await GraphEdge.insertMany(edges.map((e) => ({ repoId: repo._id, from: e.from, to: e.to })));
+    }
     repo.lastIndexedAt = new Date();
     repo.chunkCount = chunks.length;
     repo.fileCount = fileCount;
