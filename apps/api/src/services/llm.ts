@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 const CHAT_MODEL = "gemini-3.6-flash";
+const MAX_RETRIES = 3;
 
 let client: GoogleGenAI | null = null;
 
@@ -13,6 +14,17 @@ function getClient(): GoogleGenAI {
     client = new GoogleGenAI({ apiKey });
   }
   return client;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getErrorStatus(err: unknown): number | undefined {
+  if (typeof err === "object" && err !== null && "status" in err) {
+    return (err as { status?: number }).status;
+  }
+  return undefined;
 }
 
 const SYSTEM_INSTRUCTION = `You are CodeAtlas, an assistant that answers questions about a specific codebase using only the numbered source excerpts provided in each request.
@@ -31,29 +43,32 @@ interface SourceForPrompt {
   content: string;
 }
 
-export async function generateGroundedAnswer(
-  question: string,
-  sources: SourceForPrompt[]
-): Promise<string> {
+async function generateWithRetry(ai: GoogleGenAI, prompt: string, attempt = 1): Promise<string> {
+  try {
+    const response = await ai.models.generateContent({
+      model: CHAT_MODEL,
+      contents: prompt,
+      config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.2 },
+    });
+    return response.text ?? "";
+  } catch (err) {
+    const status = getErrorStatus(err);
+    const isRetryable = status === 429 || status === 503;
+    if (isRetryable && attempt < MAX_RETRIES) {
+      const backoffMs = 2000 * 2 ** (attempt - 1); // 2s, 4s, 8s
+      console.warn(`Gemini request failed (status ${status}), retrying in ${backoffMs / 1000}s`);
+      await sleep(backoffMs);
+      return generateWithRetry(ai, prompt, attempt + 1);
+    }
+    throw err;
+  }
+}
+
+export async function generateGroundedAnswer(question: string, sources: SourceForPrompt[]): Promise<string> {
   const ai = getClient();
-
   const sourcesBlock = sources
-    .map(
-      (s) =>
-        `[${s.index}] ${s.filePath} (lines ${s.lines})${s.symbolName ? ` — ${s.symbolName}` : ""}\n\`\`\`\n${s.content}\n\`\`\``
-    )
+    .map((s) => `[${s.index}] ${s.filePath} (lines ${s.lines})${s.symbolName ? ` — ${s.symbolName}` : ""}\n\`\`\`\n${s.content}\n\`\`\``)
     .join("\n\n");
-
   const prompt = `Sources:\n\n${sourcesBlock}\n\nQuestion: ${question}`;
-
-  const response = await ai.models.generateContent({
-    model: CHAT_MODEL,
-    contents: prompt,
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-      temperature: 0.2,
-    },
-  });
-
-  return response.text ?? "";
+  return generateWithRetry(ai, prompt);
 }
