@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { LayoutDashboard, MessageSquare, FileText, Search, Boxes, Database, LogOut } from "lucide-react";
+import { LayoutDashboard, MessageSquare, FileText, Search, Boxes, Database, Network, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
 import RepoSwitcher from "../components/RepoSwitcher";
@@ -12,6 +12,7 @@ const navItems = [
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/files", label: "Files", icon: FileText },
   { to: "/search", label: "Search", icon: Search },
+  { to: "/graph", label: "Graph", icon: Network },
 ];
 
 const devToolsItems = [

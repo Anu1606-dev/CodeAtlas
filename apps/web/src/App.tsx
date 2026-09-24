@@ -9,6 +9,7 @@ import OverviewPage from "./pages/OverviewPage";
 import FilesPage from "./pages/FilesPage";
 import ChunkExplorerPage from "./pages/ChunkExplorerPage";
 import VectorSearchPage from "./pages/VectorSearchPage";
+import GraphPage from "./pages/GraphPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/search" element={<VectorSearchPage />} />
           <Route path="/tools/chunks" element={<ChunkExplorerPage />} />
           <Route path="/tools/vectors" element={<VectorSearchPage />} />
+          <Route path="/graph" element={<GraphPage />} />
           <Route path="*" element={<Navigate to="/chat" replace />} />
         </Route>
       </Routes>
