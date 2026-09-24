@@ -34,14 +34,13 @@ export default function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Navigate to="/chat" replace />} />
-          <Route path="/overview" element={<PlaceholderPage title="Overview" />} />
+          <Route path="/overview" element={<OverviewPage />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/files" element={<PlaceholderPage title="Files" />} />
           <Route path="/search" element={<PlaceholderPage title="Search" />} />
           <Route path="/tools/chunks" element={<PlaceholderPage title="Chunk Explorer" />} />
           <Route path="/tools/vectors" element={<PlaceholderPage title="Vector Search" />} />
           <Route path="*" element={<Navigate to="/chat" replace />} />
-          <Route path="/overview" element={<OverviewPage />} />
         </Route>
       </Routes>
     </RepoProvider>
