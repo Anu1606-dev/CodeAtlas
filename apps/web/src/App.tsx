@@ -5,6 +5,7 @@ import { RepoProvider } from "./context/RepoContext";
 import LandingPage from "./pages/LandingPage";
 import AppLayout from "./layouts/AppLayout";
 import ChatPage from "./pages/ChatPage";
+import OverviewPage from "./pages/OverviewPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/tools/chunks" element={<PlaceholderPage title="Chunk Explorer" />} />
           <Route path="/tools/vectors" element={<PlaceholderPage title="Vector Search" />} />
           <Route path="*" element={<Navigate to="/chat" replace />} />
+          <Route path="/overview" element={<OverviewPage />} />
         </Route>
       </Routes>
     </RepoProvider>
