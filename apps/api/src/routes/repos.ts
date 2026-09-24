@@ -4,6 +4,7 @@ import { Repo } from "../models/Repo.js";
 import { requireAuth, type AuthedRequest } from "../middleware/requireAuth.js";
 import { createGithubWebhook } from "../services/githubWebhook.js";
 import type { GithubRepoSummary, ConnectedRepo } from "@codeatlas/shared";
+import { Chunk } from "../models/Chunk.js";
 
 const router = Router();
 
@@ -144,6 +145,22 @@ router.post("/:id/enable-webhook", requireAuth, async (req: AuthedRequest, res) 
   await repo.save();
 
   res.json(toConnectedRepo(repo));
+});
+
+router.get("/:id/files", requireAuth, async (req: AuthedRequest, res) => {
+  const repo = await Repo.findOne({ _id: req.params.id, userId: req.userId });
+  if (!repo) {
+    res.status(404).json({ error: "Repo not found" });
+    return;
+  }
+
+  const files = await Chunk.aggregate([
+    { $match: { repoId: repo._id } },
+    { $group: { _id: "$filePath", language: { $first: "$language" }, chunkCount: { $sum: 1 } } },
+    { $sort: { _id: 1 } },
+  ]);
+
+  res.json(files.map((f) => ({ filePath: f._id, language: f.language, chunkCount: f.chunkCount })));
 });
 
 export default router;

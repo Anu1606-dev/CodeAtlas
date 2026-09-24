@@ -158,4 +158,37 @@ router.post("/:repoId/search-test", requireAuth, async (req: AuthedRequest, res)
   }
 });
 
+router.get("/:repoId/chunks", requireAuth, async (req: AuthedRequest, res) => {
+  const repo = await Repo.findOne({ _id: req.params.repoId, userId: req.userId });
+  if (!repo) {
+    res.status(404).json({ error: "Repo not found" });
+    return;
+  }
+
+  const filter = typeof req.query.filter === "string" ? req.query.filter.trim() : "";
+  const page = Math.max(1, parseInt(String(req.query.page ?? "1"), 10) || 1);
+  const pageSize = 20;
+
+  const query: Record<string, unknown> = { repoId: repo._id };
+  if (filter) query.filePath = { $regex: filter, $options: "i" };
+
+  const [chunks, total] = await Promise.all([
+    Chunk.find(query).sort({ filePath: 1, startLine: 1 }).skip((page - 1) * pageSize).limit(pageSize),
+    Chunk.countDocuments(query),
+  ]);
+
+  res.json({
+    total,
+    page,
+    pageSize,
+    chunks: chunks.map((c) => ({
+      filePath: c.filePath,
+      language: c.language,
+      lines: `${c.startLine}-${c.endLine}`,
+      symbolName: c.symbolName,
+      content: c.content,
+    })),
+  });
+});
+
 export default router;

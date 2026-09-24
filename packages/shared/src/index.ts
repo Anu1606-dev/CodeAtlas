@@ -95,3 +95,24 @@ export interface ConnectedRepo {
   fileCount?: number;
   webhookActive: boolean;
 }
+
+export interface RepoFileSummary {
+  filePath: string;
+  language: string;
+  chunkCount: number;
+}
+
+export interface StoredChunk {
+  filePath: string;
+  language: string;
+  lines: string;
+  symbolName?: string;
+  content: string;
+}
+
+export interface ChunksPageResponse {
+  total: number;
+  page: number;
+  pageSize: number;
+  chunks: StoredChunk[];
+}
