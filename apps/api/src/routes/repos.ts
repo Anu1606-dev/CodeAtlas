@@ -69,6 +69,7 @@ function toConnectedRepo(r: InstanceType<typeof Repo>): ConnectedRepo {
     lastIndexedAt: r.lastIndexedAt?.toISOString(),
     chunkCount: r.chunkCount,
     webhookActive: Boolean(r.githubWebhookId),
+    fileCount: r.fileCount,
   };
 }
 

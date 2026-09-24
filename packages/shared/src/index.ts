@@ -92,5 +92,6 @@ export interface ConnectedRepo {
   connectedAt: string;
   lastIndexedAt?: string;
   chunkCount?: number;
+  fileCount?: number;
   webhookActive: boolean;
 }

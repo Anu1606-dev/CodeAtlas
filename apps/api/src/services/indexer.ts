@@ -62,8 +62,10 @@ export async function runIndexJob(repoId: string): Promise<IndexJobResult> {
       }))
     );
 
+    const fileCount = new Set(chunks.map((c) => c.filePath)).size;
     repo.lastIndexedAt = new Date();
     repo.chunkCount = chunks.length;
+    repo.fileCount = fileCount;
     await repo.save();
 
     return { chunksIndexed: chunks.length, tookMs: Date.now() - startedAt };
