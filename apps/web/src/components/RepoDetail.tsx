@@ -1,12 +1,12 @@
 import { useState } from "react";
-import type {
-  ConnectedRepo,
-  IndexPreviewResponse,
-  IndexRunResponse,
-  SearchTestResponse,
-} from "@codeatlas/shared";
+import { Loader2 } from "lucide-react";
+import type { ConnectedRepo, IndexPreviewResponse, IndexRunResponse, SearchTestResponse } from "@codeatlas/shared";
 import { apiPost } from "../lib/api";
 import ChatPanel from "./ChatPanel";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 interface RepoDetailProps {
   repo: ConnectedRepo;
@@ -15,19 +15,15 @@ interface RepoDetailProps {
 
 export default function RepoDetail({ repo, onRepoUpdated }: RepoDetailProps) {
   const [error, setError] = useState<string | null>(null);
-
   const [preview, setPreview] = useState<IndexPreviewResponse | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [filterText, setFilterText] = useState("");
-
   const [indexing, setIndexing] = useState(false);
   const [indexResult, setIndexResult] = useState<IndexRunResponse | null>(null);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchTestResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
-
   const [enablingWebhook, setEnablingWebhook] = useState(false);
 
   async function handlePreview() {
@@ -35,9 +31,7 @@ export default function RepoDetail({ repo, onRepoUpdated }: RepoDetailProps) {
     setError(null);
     setPreview(null);
     try {
-      const result = await apiPost<IndexPreviewResponse>(`/api/index/${repo.id}/preview`, {
-        filter: filterText,
-      });
+      const result = await apiPost<IndexPreviewResponse>(`/api/index/${repo.id}/preview`, { filter: filterText });
       setPreview(result);
     } catch {
       setError("Chunking preview failed — check the API terminal for details");
@@ -53,11 +47,7 @@ export default function RepoDetail({ repo, onRepoUpdated }: RepoDetailProps) {
     try {
       const result = await apiPost<IndexRunResponse>(`/api/index/${repo.id}/run`);
       setIndexResult(result);
-      onRepoUpdated({
-        ...repo,
-        chunkCount: result.chunksIndexed,
-        lastIndexedAt: new Date().toISOString(),
-      });
+      onRepoUpdated({ ...repo, chunkCount: result.chunksIndexed, lastIndexedAt: new Date().toISOString() });
     } catch {
       setError("Indexing failed — check the API terminal for details");
     } finally {
@@ -70,9 +60,7 @@ export default function RepoDetail({ repo, onRepoUpdated }: RepoDetailProps) {
     setSearchError(null);
     setSearchResults(null);
     try {
-      const result = await apiPost<SearchTestResponse>(`/api/index/${repo.id}/search-test`, {
-        query: searchQuery,
-      });
+      const result = await apiPost<SearchTestResponse>(`/api/index/${repo.id}/search-test`, { query: searchQuery });
       setSearchResults(result);
     } catch {
       setSearchError("Search failed — check that the vector index shows Active in Atlas");
@@ -95,105 +83,80 @@ export default function RepoDetail({ repo, onRepoUpdated }: RepoDetailProps) {
   }
 
   return (
-    <div className="w-full text-left flex flex-col gap-3">
-      <div className="alert alert-success flex-col items-start gap-1 w-full">
-        <span className="font-semibold">Connected: {repo.fullName}</span>
-        <span className="text-xs opacity-70">Default branch: {repo.defaultBranch}</span>
-        {repo.chunkCount !== undefined && (
-          <span className="text-xs opacity-70">
-            Indexed: {repo.chunkCount} chunks
-            {repo.lastIndexedAt && ` · ${new Date(repo.lastIndexedAt).toLocaleString()}`}
+    <div className="w-full text-left flex flex-col gap-4">
+      <Card className="border-green-500/30 bg-green-500/5">
+        <CardContent className="flex flex-col gap-1 py-4">
+          <span className="font-semibold">Connected: {repo.fullName}</span>
+          <span className="text-xs text-muted-foreground">Default branch: {repo.defaultBranch}</span>
+          {repo.chunkCount !== undefined && (
+            <span className="text-xs text-muted-foreground">
+              Indexed: {repo.chunkCount} chunks
+              {repo.lastIndexedAt && ` · ${new Date(repo.lastIndexedAt).toLocaleString()}`}
+            </span>
+          )}
+          <span className="text-xs text-muted-foreground">
+            Auto-reindex on push: {repo.webhookActive ? "✓ Active" : "Not enabled"}
           </span>
-        )}
-        <span className="text-xs opacity-70">
-          Auto-reindex on push: {repo.webhookActive ? "✓ Active" : "Not enabled"}
-        </span>
-        {!repo.webhookActive && (
-          <button
-            className="btn btn-xs btn-outline mt-1"
-            onClick={handleEnableWebhook}
-            disabled={enablingWebhook}
-          >
-            {enablingWebhook ? <span className="loading loading-spinner loading-xs" /> : "Enable auto-reindex"}
-          </button>
-        )}
-      </div>
+          {!repo.webhookActive && (
+            <Button size="sm" variant="outline" className="mt-1 w-fit" onClick={handleEnableWebhook} disabled={enablingWebhook}>
+              {enablingWebhook ? <Loader2 className="animate-spin" size={14} /> : "Enable auto-reindex"}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
 
-      {error && <p className="text-error text-xs">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <button className="btn btn-sm btn-primary" onClick={handleRunIndex} disabled={indexing}>
-        {indexing ? <span className="loading loading-spinner loading-xs" /> : "Run indexing"}
-      </button>
+      <Button onClick={handleRunIndex} disabled={indexing}>
+        {indexing ? <Loader2 className="animate-spin" size={16} /> : "Run indexing"}
+      </Button>
 
       {indexResult && (
-        <div className="alert alert-info text-xs">
+        <p className="text-xs text-muted-foreground">
           Indexed {indexResult.chunksIndexed} chunks in {(indexResult.tookMs / 1000).toFixed(1)}s
-        </div>
+        </p>
       )}
 
       <ChatPanel key={repo.id} repoId={repo.id} />
 
-      <div className="divider text-xs opacity-50">chunking debug</div>
-
+      <Separator />
+      <p className="text-xs text-muted-foreground uppercase">Chunking debug</p>
       <div className="flex gap-2">
-        <input
-          type="text"
-          placeholder="Filter by filename (e.g. slice)"
-          className="input input-sm input-bordered flex-1"
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-        />
-        <button className="btn btn-sm btn-secondary" onClick={handlePreview} disabled={previewing}>
-          {previewing ? <span className="loading loading-spinner loading-xs" /> : "Preview"}
-        </button>
+        <Input placeholder="Filter by filename (e.g. slice)" value={filterText} onChange={(e) => setFilterText(e.target.value)} />
+        <Button variant="secondary" onClick={handlePreview} disabled={previewing}>
+          {previewing ? <Loader2 className="animate-spin" size={16} /> : "Preview"}
+        </Button>
       </div>
-
       {preview && (
-        <div className="bg-base-200 rounded-box p-3 text-xs max-h-64 overflow-y-auto">
-          <p className="font-semibold mb-2">
-            {preview.matchedChunks} of {preview.totalChunks} chunks match
-          </p>
+        <div className="bg-muted rounded-lg p-3 text-xs max-h-64 overflow-y-auto">
+          <p className="font-semibold mb-2">{preview.matchedChunks} of {preview.totalChunks} chunks match</p>
           {preview.sample.map((c, idx) => (
-            <div key={idx} className="mb-2 pb-2 border-b border-base-300 last:border-0">
+            <div key={idx} className="mb-2 pb-2 border-b border-border last:border-0">
               <p className="font-mono">{c.filePath} ({c.lines})</p>
-              {c.symbolName && <p className="opacity-70">symbol: {c.symbolName}</p>}
-              <pre className="whitespace-pre-wrap opacity-80">{c.preview}</pre>
+              {c.symbolName && <p className="text-muted-foreground">symbol: {c.symbolName}</p>}
+              <pre className="whitespace-pre-wrap text-muted-foreground">{c.preview}</pre>
             </div>
           ))}
         </div>
       )}
 
-      <div className="divider text-xs opacity-50">vector search debug</div>
-
+      <Separator />
+      <p className="text-xs text-muted-foreground uppercase">Vector search debug</p>
       <div className="flex gap-2">
-        <input
-          type="text"
-          placeholder="Raw vector search (no LLM)..."
-          className="input input-sm input-bordered flex-1"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <button
-          className="btn btn-sm btn-accent"
-          onClick={handleSearchTest}
-          disabled={searching || !searchQuery.trim()}
-        >
-          {searching ? <span className="loading loading-spinner loading-xs" /> : "Search"}
-        </button>
+        <Input placeholder="Raw vector search (no LLM)..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+        <Button variant="secondary" onClick={handleSearchTest} disabled={searching || !searchQuery.trim()}>
+          {searching ? <Loader2 className="animate-spin" size={16} /> : "Search"}
+        </Button>
       </div>
-
-      {searchError && <p className="text-error text-xs">{searchError}</p>}
-
+      {searchError && <p className="text-xs text-destructive">{searchError}</p>}
       {searchResults && (
-        <div className="bg-base-200 rounded-box p-3 text-xs max-h-64 overflow-y-auto">
+        <div className="bg-muted rounded-lg p-3 text-xs max-h-64 overflow-y-auto">
           <p className="font-semibold mb-2">Results for: "{searchResults.query}"</p>
           {searchResults.results.map((r, idx) => (
-            <div key={idx} className="mb-2 pb-2 border-b border-base-300 last:border-0">
-              <p className="font-mono">
-                {r.filePath} ({r.lines}) — score {r.score.toFixed(3)}
-              </p>
-              {r.symbolName && <p className="opacity-70">symbol: {r.symbolName}</p>}
-              <pre className="whitespace-pre-wrap opacity-80">{r.content}</pre>
+            <div key={idx} className="mb-2 pb-2 border-b border-border last:border-0">
+              <p className="font-mono">{r.filePath} ({r.lines}) — score {r.score.toFixed(3)}</p>
+              {r.symbolName && <p className="text-muted-foreground">symbol: {r.symbolName}</p>}
+              <pre className="whitespace-pre-wrap text-muted-foreground">{r.content}</pre>
             </div>
           ))}
         </div>

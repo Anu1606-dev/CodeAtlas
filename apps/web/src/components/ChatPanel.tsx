@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { Loader2 } from "lucide-react";
 import type { ChatResponse, ChatCitation } from "@codeatlas/shared";
 import { apiPost } from "../lib/api";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface Message {
   role: "user" | "assistant";
@@ -28,15 +32,9 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
 
     try {
       const result = await apiPost<ChatResponse>(`/api/chat/${repoId}`, { question });
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: result.answer, citations: result.citations },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", text: result.answer, citations: result.citations }]);
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: "Something went wrong answering that — check the API terminal." },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", text: "Something went wrong answering that — check the API terminal." }]);
     } finally {
       setSending(false);
     }
@@ -50,33 +48,29 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
   }
 
   return (
-    <div className="flex flex-col w-full h-112 bg-base-100 rounded-box border border-base-300">
-      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+    <div className="flex flex-col w-full h-112 bg-card rounded-lg border border-border">
+      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
         {messages.length === 0 && (
-          <p className="text-sm opacity-60 text-center mt-8">
+          <p className="text-sm text-muted-foreground text-center mt-8">
             Ask a question about this codebase to get started.
           </p>
         )}
 
         {messages.map((m, idx) => (
-          <div key={idx} className={`chat ${m.role === "user" ? "chat-end" : "chat-start"}`}>
+          <div key={idx} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
             <div
-              className={`chat-bubble whitespace-pre-wrap text-sm ${
-                m.role === "user" ? "chat-bubble-primary" : ""
+              className={`rounded-lg px-3 py-2 text-sm whitespace-pre-wrap max-w-[85%] ${
+                m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
               }`}
             >
               {m.text}
             </div>
             {m.citations && m.citations.length > 0 && (
-              <div className="chat-footer flex flex-wrap gap-1 mt-1">
+              <div className="flex flex-wrap gap-1 mt-1 max-w-[85%]">
                 {m.citations.map((c) => (
-                  <span
-                    key={c.index}
-                    className="badge badge-outline badge-sm"
-                    title={c.symbolName ?? ""}
-                  >
+                  <Badge key={c.index} variant="outline" title={c.symbolName ?? ""}>
                     [{c.index}] {c.filePath}:{c.lines}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             )}
@@ -84,9 +78,9 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
         ))}
 
         {sending && (
-          <div className="chat chat-start">
-            <div className="chat-bubble">
-              <span className="loading loading-dots loading-sm" />
+          <div className="flex items-start">
+            <div className="rounded-lg px-3 py-2 bg-muted">
+              <Loader2 className="animate-spin" size={16} />
             </div>
           </div>
         )}
@@ -94,23 +88,15 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
         <div ref={bottomRef} />
       </div>
 
-      <div className="flex gap-2 p-3 border-t border-base-300">
-        <input
-          type="text"
-          className="input input-bordered input-sm flex-1"
+      <div className="flex gap-2 p-3 border-t border-border">
+        <Input
           placeholder="Ask about this codebase..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={sending}
         />
-        <button
-          className="btn btn-sm btn-primary"
-          onClick={handleSend}
-          disabled={sending || !input.trim()}
-        >
-          Send
-        </button>
+        <Button onClick={handleSend} disabled={sending || !input.trim()}>Send</Button>
       </div>
     </div>
   );
