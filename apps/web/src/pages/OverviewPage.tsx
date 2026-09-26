@@ -6,6 +6,7 @@ import { apiPost } from "../lib/api";
 import type { ConnectedRepo, IndexRunResponse } from "@codeatlas/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { motion } from "motion/react";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -88,22 +89,26 @@ export default function OverviewPage() {
       </Card>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {stats.map(({ label, value, icon: Icon }) => (
-          <Card key={label}>
+        {stats.map(({ label, value, icon: Icon }, i) => (
+          <motion.div key={label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: i * 0.05 }}>
+            <Card>
+              <CardContent className="flex flex-col gap-1 py-4">
+                <Icon size={16} className="text-primary" />
+                <span className="text-xl font-bold">{value}</span>
+                <span className="text-xs text-muted-foreground">{label}</span>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: stats.length * 0.05 }}>
+          <Card>
             <CardContent className="flex flex-col gap-1 py-4">
-              <Icon size={16} className="text-primary" />
-              <span className="text-xl font-bold">{value}</span>
-              <span className="text-xs text-muted-foreground">{label}</span>
+              <CheckCircle2 size={16} className={repo.lastIndexedAt ? "text-green-500" : "text-muted-foreground"} />
+              <span className="text-sm font-semibold">{repo.lastIndexedAt ? "Indexed" : "Not indexed"}</span>
+              {repo.lastIndexedAt && <span className="text-xs text-muted-foreground">{formatRelativeTime(repo.lastIndexedAt)}</span>}
             </CardContent>
           </Card>
-        ))}
-        <Card>
-          <CardContent className="flex flex-col gap-1 py-4">
-            <CheckCircle2 size={16} className={repo.lastIndexedAt ? "text-green-500" : "text-muted-foreground"} />
-            <span className="text-sm font-semibold">{repo.lastIndexedAt ? "Indexed" : "Not indexed"}</span>
-            {repo.lastIndexedAt && <span className="text-xs text-muted-foreground">{formatRelativeTime(repo.lastIndexedAt)}</span>}
-          </CardContent>
-        </Card>
+        </motion.div>
       </div>
 
       <Card>

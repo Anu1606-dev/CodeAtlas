@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import CodeBlock from "./CodeBlock";
+import { motion } from "motion/react";
 
 interface Message {
   role: "user" | "assistant";
@@ -78,36 +79,43 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
         )}
 
         {messages.map((m, idx) => (
-          <div key={idx} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
-            <div
-              className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${
-                m.role === "user" ? "bg-primary text-primary-foreground whitespace-pre-wrap" : "bg-muted text-foreground"
-              }`}
-            >
-              {m.role === "assistant" ? (
-                <div className="flex flex-col gap-2">
-                  {splitCodeFences(m.text).map((seg, i) =>
-                    seg.type === "code" ? (
-                      <CodeBlock key={i} code={seg.content} lang={seg.lang} />
-                    ) : seg.content.trim() ? (
-                      <p key={i} className="whitespace-pre-wrap">{seg.content}</p>
-                    ) : null
-                  )}
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
+          >
+            <div key={idx} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
+              <div
+                className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${m.role === "user" ? "bg-primary text-primary-foreground whitespace-pre-wrap" : "bg-muted text-foreground"
+                  }`}
+              >
+                {m.role === "assistant" ? (
+                  <div className="flex flex-col gap-2">
+                    {splitCodeFences(m.text).map((seg, i) =>
+                      seg.type === "code" ? (
+                        <CodeBlock key={i} code={seg.content} lang={seg.lang} />
+                      ) : seg.content.trim() ? (
+                        <p key={i} className="whitespace-pre-wrap">{seg.content}</p>
+                      ) : null
+                    )}
+                  </div>
+                ) : (
+                  m.text
+                )}
+              </div>
+              {m.citations && m.citations.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1 max-w-[85%]">
+                  {m.citations.map((c) => (
+                    <Badge key={c.index} variant="outline" title={c.symbolName ?? ""}>
+                      [{c.index}] {c.filePath}:{c.lines}
+                    </Badge>
+                  ))}
                 </div>
-              ) : (
-                m.text
               )}
             </div>
-            {m.citations && m.citations.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-1 max-w-[85%]">
-                {m.citations.map((c) => (
-                  <Badge key={c.index} variant="outline" title={c.symbolName ?? ""}>
-                    [{c.index}] {c.filePath}:{c.lines}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
+          </motion.div>
         ))}
 
         {sending && (
