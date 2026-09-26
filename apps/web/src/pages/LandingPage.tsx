@@ -1,8 +1,8 @@
 import { MessageSquare, FileSearch, Search, Network } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
-import { Button } from "@/components/ui/button";
 import Logo from "../components/Logo";
+import { Button } from "@/components/ui/button";
 
 const features = [
   { icon: MessageSquare, label: "Chat with your code" },
@@ -23,8 +23,11 @@ export default function LandingPage() {
   const { login } = useAuth();
 
   return (
-    <main className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="flex items-center justify-between px-6 py-4">
+    <main className="relative min-h-screen bg-background text-foreground flex flex-col overflow-hidden">
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
+
+      <header className="relative flex items-center justify-between px-4 sm:px-6 py-4">
         <div className="flex items-center gap-2">
           <Logo className="h-7 w-auto" />
           <span className="font-bold text-lg">CodeAtlas</span>
@@ -32,20 +35,23 @@ export default function LandingPage() {
         <ThemeToggle />
       </header>
 
-      <div className="flex-1 grid place-items-center px-6">
+      <div className="relative flex-1 grid place-items-center px-4 sm:px-6 py-8">
         <div className="max-w-lg text-center flex flex-col items-center gap-6">
-          <h1 className="text-4xl font-bold leading-tight">
-            Understand <span className="text-primary">Your Codebase.</span>
+          <h1 className="text-3xl sm:text-5xl font-bold leading-tight tracking-tight">
+            Understand <br className="hidden sm:block" />
+            <span className="text-primary">Your Codebase.</span>
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm sm:text-base">
             CodeAtlas lets you explore, search, and ask questions about your codebase — powered by AI,
             grounded in your actual code.
           </p>
 
-          <div className="grid grid-cols-2 gap-2 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
             {features.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 text-sm">
-                <Icon size={16} className="text-primary" />
+              <div key={label} className="flex items-center gap-2 bg-muted/60 border border-border rounded-lg px-3 py-2.5 text-sm">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
+                  <Icon size={15} />
+                </span>
                 {label}
               </div>
             ))}
