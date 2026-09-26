@@ -73,3 +73,24 @@ export async function generateGroundedAnswer(question: string, sources: SourceFo
   const prompt = `Sources:\n\n${sourcesBlock}\n\nQuestion: ${question}`;
   return generateWithRetry(ai, prompt);
 }
+
+export async function* generateGroundedAnswerStream(
+  question: string,
+  sources: SourceForPrompt[]
+): AsyncGenerator<string> {
+  const ai = getClient();
+  const sourcesBlock = sources
+    .map((s) => `[${s.index}] ${s.filePath} (lines ${s.lines})${s.symbolName ? ` — ${s.symbolName}` : ""}\n\`\`\`\n${s.content}\n\`\`\``)
+    .join("\n\n");
+  const prompt = `Sources:\n\n${sourcesBlock}\n\nQuestion: ${question}`;
+
+  const response = await ai.models.generateContentStream({
+    model: CHAT_MODEL,
+    contents: prompt,
+    config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.2 },
+  });
+
+  for await (const chunk of response) {
+    if (chunk.text) yield chunk.text;
+  }
+}

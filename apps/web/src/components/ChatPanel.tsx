@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Loader2 } from "lucide-react";
-import type { ChatResponse, ChatCitation } from "@codeatlas/shared";
-import { apiPost } from "../lib/api";
+import { motion } from "motion/react";
+import type { ChatCitation } from "@codeatlas/shared";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import CodeBlock from "./CodeBlock";
-import { motion } from "motion/react";
+
+const API_URL = import.meta.env.VITE_API_URL;
+const CITATIONS_MARKER = "\n<<<CITATIONS>>>\n";
 
 interface Message {
   role: "user" | "assistant";
@@ -44,19 +46,55 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
 
+  function updateLastAssistant(update: Partial<Message>) {
+    setMessages((prev) => {
+      const next = [...prev];
+      next[next.length - 1] = { ...next[next.length - 1], ...update };
+      return next;
+    });
+  }
+
   async function handleSend() {
     const question = input.trim();
     if (!question || sending) return;
 
-    setMessages((prev) => [...prev, { role: "user", text: question }]);
+    setMessages((prev) => [...prev, { role: "user", text: question }, { role: "assistant", text: "" }]);
     setInput("");
     setSending(true);
 
     try {
-      const result = await apiPost<ChatResponse>(`/api/chat/${repoId}`, { question });
-      setMessages((prev) => [...prev, { role: "assistant", text: result.answer, citations: result.citations }]);
+      const res = await fetch(`${API_URL}/api/chat/${repoId}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      if (!res.ok || !res.body) throw new Error("Request failed");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let raw = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        raw += decoder.decode(value, { stream: true });
+
+        const markerIdx = raw.indexOf(CITATIONS_MARKER);
+        updateLastAssistant({ text: markerIdx >= 0 ? raw.slice(0, markerIdx) : raw });
+      }
+
+      const markerIdx = raw.indexOf(CITATIONS_MARKER);
+      if (markerIdx >= 0) {
+        try {
+          const citations = JSON.parse(raw.slice(markerIdx + CITATIONS_MARKER.length)) as ChatCitation[];
+          updateLastAssistant({ citations });
+        } catch {
+          // malformed trailer — leave text as-is, no citations
+        }
+      }
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", text: "Something went wrong answering that — check the API terminal." }]);
+      updateLastAssistant({ text: "Something went wrong answering that — check the API terminal." });
     } finally {
       setSending(false);
     }
@@ -70,7 +108,7 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
   }
 
   return (
-    <div className="flex flex-col w-full h-112 bg-card rounded-lg border border-border">
+    <div className="flex flex-col w-full h-[28rem] bg-card rounded-lg border border-border">
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
         {messages.length === 0 && (
           <p className="text-sm text-muted-foreground text-center mt-8">
@@ -78,20 +116,24 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
           </p>
         )}
 
-        {messages.map((m, idx) => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
-          >
-            <div key={idx} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
+        {messages.map((m, idx) => {
+          const isStreamingEmpty = sending && idx === messages.length - 1 && m.role === "assistant" && m.text === "";
+          return (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
+            >
               <div
-                className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${m.role === "user" ? "bg-primary text-primary-foreground whitespace-pre-wrap" : "bg-muted text-foreground"
-                  }`}
+                className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${
+                  m.role === "user" ? "bg-primary text-primary-foreground whitespace-pre-wrap" : "bg-muted text-foreground"
+                }`}
               >
-                {m.role === "assistant" ? (
+                {isStreamingEmpty ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : m.role === "assistant" ? (
                   <div className="flex flex-col gap-2">
                     {splitCodeFences(m.text).map((seg, i) =>
                       seg.type === "code" ? (
@@ -114,17 +156,9 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
                   ))}
                 </div>
               )}
-            </div>
-          </motion.div>
-        ))}
-
-        {sending && (
-          <div className="flex items-start">
-            <div className="rounded-lg px-3 py-2 bg-muted">
-              <Loader2 className="animate-spin" size={16} />
-            </div>
-          </div>
-        )}
+            </motion.div>
+          );
+        })}
 
         <div ref={bottomRef} />
       </div>

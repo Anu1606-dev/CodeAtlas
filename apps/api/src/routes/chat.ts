@@ -3,10 +3,12 @@ import { Repo } from "../models/Repo.js";
 import { Chunk } from "../models/Chunk.js";
 import { requireAuth, type AuthedRequest } from "../middleware/requireAuth.js";
 import { embedTexts } from "../services/embeddings.js";
-import { generateGroundedAnswer } from "../services/llm.js";
-import type { ChatResponse, ChatCitation } from "@codeatlas/shared";
+import { generateGroundedAnswerStream } from "../services/llm.js";
+import type { ChatCitation } from "@codeatlas/shared";
 
 const router = Router();
+
+const CITATIONS_MARKER = "\n<<<CITATIONS>>>\n";
 
 router.post("/:repoId", requireAuth, async (req: AuthedRequest, res) => {
   const repo = await Repo.findOne({ _id: req.params.repoId, userId: req.userId });
@@ -35,24 +37,16 @@ router.post("/:repoId", requireAuth, async (req: AuthedRequest, res) => {
           filter: { repoId: repo._id },
         },
       },
-      {
-        $project: {
-          _id: 0,
-          filePath: 1,
-          startLine: 1,
-          endLine: 1,
-          symbolName: 1,
-          content: 1,
-        },
-      },
+      { $project: { _id: 0, filePath: 1, startLine: 1, endLine: 1, symbolName: 1, content: 1 } },
     ]);
 
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+
     if (matches.length === 0) {
-      const body: ChatResponse = {
-        answer: "This repo doesn't seem to be indexed yet — try running indexing first.",
-        citations: [],
-      };
-      res.json(body);
+      res.write("This repo doesn't seem to be indexed yet — try running indexing first.");
+      res.write(`${CITATIONS_MARKER}${JSON.stringify([])}`);
+      res.end();
       return;
     }
 
@@ -64,29 +58,26 @@ router.post("/:repoId", requireAuth, async (req: AuthedRequest, res) => {
       content: m.content as string,
     }));
 
-    const answer = await generateGroundedAnswer(question, sources);
+    let fullText = "";
+    for await (const piece of generateGroundedAnswerStream(question, sources)) {
+      fullText += piece;
+      res.write(piece);
+    }
 
-    // Only cite sources the model actually referenced by number in its
-    // answer — not everything that happened to be retrieved. A source
-    // sitting unused in the candidate pool didn't actually ground anything.
-    const citedIndices = new Set(
-      Array.from(answer.matchAll(/\[(\d+)\]/g), (m) => Number(m[1]))
-    );
-
+    const citedIndices = new Set(Array.from(fullText.matchAll(/\[(\d+)\]/g), (m) => Number(m[1])));
     const citations: ChatCitation[] = sources
       .filter((s) => citedIndices.has(s.index))
-      .map((s) => ({
-        index: s.index,
-        filePath: s.filePath,
-        lines: s.lines,
-        symbolName: s.symbolName,
-      }));
+      .map((s) => ({ index: s.index, filePath: s.filePath, lines: s.lines, symbolName: s.symbolName }));
 
-    const body: ChatResponse = { answer, citations };
-    res.json(body);
+    res.write(`${CITATIONS_MARKER}${JSON.stringify(citations)}`);
+    res.end();
   } catch (err) {
     console.error("Chat failed:", err);
-    res.status(500).json({ error: "Failed to generate an answer" });
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Failed to generate an answer" });
+    } else {
+      res.end();
+    }
   }
 });
 
