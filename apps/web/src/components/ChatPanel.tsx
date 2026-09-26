@@ -5,11 +5,32 @@ import { apiPost } from "../lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import CodeBlock from "./CodeBlock";
 
 interface Message {
   role: "user" | "assistant";
   text: string;
   citations?: ChatCitation[];
+}
+
+interface Segment {
+  type: "text" | "code";
+  content: string;
+  lang?: string;
+}
+
+function splitCodeFences(text: string): Segment[] {
+  const parts: Segment[] = [];
+  const regex = /```(\w+)?\n?([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) parts.push({ type: "text", content: text.slice(lastIndex, match.index) });
+    parts.push({ type: "code", content: match[2].trim(), lang: match[1] || "text" });
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < text.length) parts.push({ type: "text", content: text.slice(lastIndex) });
+  return parts;
 }
 
 export default function ChatPanel({ repoId }: { repoId: string }) {
@@ -59,11 +80,23 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
         {messages.map((m, idx) => (
           <div key={idx} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
             <div
-              className={`rounded-lg px-3 py-2 text-sm whitespace-pre-wrap max-w-[85%] ${
-                m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
+              className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${
+                m.role === "user" ? "bg-primary text-primary-foreground whitespace-pre-wrap" : "bg-muted text-foreground"
               }`}
             >
-              {m.text}
+              {m.role === "assistant" ? (
+                <div className="flex flex-col gap-2">
+                  {splitCodeFences(m.text).map((seg, i) =>
+                    seg.type === "code" ? (
+                      <CodeBlock key={i} code={seg.content} lang={seg.lang} />
+                    ) : seg.content.trim() ? (
+                      <p key={i} className="whitespace-pre-wrap">{seg.content}</p>
+                    ) : null
+                  )}
+                </div>
+              ) : (
+                m.text
+              )}
             </div>
             {m.citations && m.citations.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1 max-w-[85%]">

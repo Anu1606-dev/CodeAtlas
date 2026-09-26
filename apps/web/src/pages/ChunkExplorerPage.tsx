@@ -6,6 +6,7 @@ import type { ChunksPageResponse } from "@codeatlas/shared";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import CodeBlock from "../components/CodeBlock";
 
 export default function ChunkExplorerPage() {
   const { selectedRepo } = useRepos();
@@ -37,7 +38,7 @@ export default function ChunkExplorerPage() {
             <CardContent className="py-3">
               <p className="font-mono text-sm">{c.filePath} ({c.lines})</p>
               {c.symbolName && <p className="text-xs text-muted-foreground mb-1">symbol: {c.symbolName}</p>}
-              <pre className="text-xs bg-muted rounded p-2 overflow-x-auto whitespace-pre-wrap">{c.content}</pre>
+              <CodeBlock code={c.content} lang={c.language} />
             </CardContent>
           </Card>
         ))}

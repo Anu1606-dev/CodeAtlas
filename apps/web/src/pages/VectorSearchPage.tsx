@@ -6,6 +6,7 @@ import type { SearchTestResponse } from "@codeatlas/shared";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import CodeBlock from "../components/CodeBlock";
 
 export default function VectorSearchPage() {
   const { selectedRepo } = useRepos();
@@ -48,7 +49,7 @@ export default function VectorSearchPage() {
                 <span className="text-xs text-muted-foreground">score {r.score.toFixed(3)}</span>
               </div>
               {r.symbolName && <p className="text-xs text-muted-foreground mb-1">symbol: {r.symbolName}</p>}
-              <pre className="text-xs bg-muted rounded p-2 overflow-x-auto whitespace-pre-wrap">{r.content}</pre>
+              <CodeBlock code={r.content} lang={r.language} />
             </CardContent>
           </Card>
         ))}
