@@ -108,7 +108,7 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
   }
 
   return (
-    <div className="flex flex-col w-full h-[28rem] bg-card rounded-lg border border-border">
+    <div className="flex flex-col w-full h-112 bg-card rounded-lg border border-border">
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
         {messages.length === 0 && (
           <p className="text-sm text-muted-foreground text-center mt-8">
