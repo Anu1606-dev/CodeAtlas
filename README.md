@@ -1,209 +1,84 @@
 # CodeAtlas
 
-> An AI-powered codebase explorer for understanding, searching, and navigating GitHub repositories.
+Ask natural-language questions about any GitHub repository and get grounded, cited answers — not guesses. Connect a repo, CodeAtlas clones and chunks it respecting function/class boundaries, embeds the code, and answers your questions with real file/line citations pulled from an Atlas Vector Search index.
 
-CodeAtlas is a full-stack web application designed to make large codebases easier to explore and understand.
+![CodeAtlas demo](docs/demo.gif)
 
-The project is being built incrementally, starting with the core repository exploration experience and evolving toward AI-powered code search, explanations, and RAG-based conversations.
+## Why this exists
 
-## 🚧 Project Status
+Most "chat with your codebase" tools either hallucinate confidently or bury you in raw search results. CodeAtlas is built around one constraint: **every claim in an answer must trace back to a real, retrievable chunk of code** — proven with an eval harness, not just eyeballed.
 
-**Early development**
+## Features
 
-The initial monorepo, frontend, backend API, shared package, and development setup are in place.
+- **GitHub OAuth** — sign in with your GitHub account
+- **Multi-repo support** — connect and switch between several of your own repos
+- **Structure-aware chunking** — a regex-based parser that respects function/class/factory-call boundaries (e.g. Redux `createSlice`), not fixed-size splits
+- **Semantic search** — Gemini embeddings + MongoDB Atlas Vector Search
+- **Grounded, cited chat** — streaming answers with inline `[1]` references that map to real file paths and line numbers, filtered to only what the model actually cited
+- **Webhook-based re-indexing** — a `git push` to the default branch automatically triggers a background re-index via a BullMQ/Redis job queue, verified with HMAC-signed GitHub webhooks
+- **3D dependency graph** — visualizes real import relationships between files (React Three Fiber)
+- **Developer tools** — dedicated Chunk Explorer and raw Vector Search pages for inspecting retrieval directly
 
-More features and UI improvements are actively being developed.
+## Retrieval quality
 
-## ✨ Planned Features
+Measured with a 10-query eval harness (`pnpm eval`) against a real indexed repo:
 
-* 🔗 Connect GitHub repositories
-* 📂 Explore repository file structures
-* 📄 View source code
-* 🔎 Search across codebases
-* 🧠 Semantic code search using embeddings
-* 🤖 AI-powered code explanations
-* 💬 Ask questions about a codebase
-* 📚 RAG-powered answers with code references
-* 🌳 Code-aware code chunking
-* 📊 Repository indexing and processing status
-* 🔐 GitHub authentication
-* ⚡ Background repository indexing
+| Metric | Result |
+|---|---|
+| Hit rate @ top-8 | 100% (10/10) |
+| Mean Reciprocal Rank | 0.792 |
 
-> Features will be added progressively as development continues.
+## Architecture
 
-## 🏗️ Tech Stack
-
-### Frontend
-
-* React
-* TypeScript
-* Vite
-* Tailwind CSS
-* daisyUI
-
-### Backend
-
-* Node.js
-* Express
-* TypeScript
-
-### Project Structure
-
-* pnpm workspaces
-* Monorepo architecture
-* Shared TypeScript package
-
-### Planned / Exploring
-
-* MongoDB
-* GitHub API
-* Gemini API
-* Embeddings
-* RAG
-* tree-sitter
-* Redis / BullMQ
-
-## 📁 Project Structure
-
-```text
-CodeAtlas/
-├── apps/
-│   ├── api/          # Backend API
-│   └── web/          # React frontend
-│
-├── packages/
-│   └── shared/       # Shared TypeScript types
-│
-├── package.json
-├── pnpm-workspace.yaml
-└── tsconfig.base.json
+```mermaid
+graph LR
+  User -->|GitHub OAuth| Web[React + Vite]
+  Web -->|REST| API[Express API]
+  API -->|clone + chunk| GitHub[(GitHub API)]
+  API -->|embed| Gemini[Gemini API]
+  API -->|store chunks + vectors| Atlas[(MongoDB Atlas<br/>Vector Search)]
+  API -->|enqueue| Queue[(Redis / BullMQ)]
+  Worker[Background Worker] -->|consumes| Queue
+  Worker -->|re-index| Atlas
+  GitHub -->|webhook on push| API
 ```
 
-## 🚀 Getting Started
+## Tech stack
 
-### Prerequisites
+| Layer | Choice |
+|---|---|
+| Monorepo | pnpm workspaces, TypeScript |
+| Frontend | React, Vite, Tailwind CSS, shadcn/ui, React Three Fiber |
+| Backend | Node.js, Express 5 |
+| Database | MongoDB Atlas + Atlas Vector Search |
+| Embeddings / LLM | Google Gemini (`gemini-embedding-001`, `gemini-3.6-flash`) |
+| Job queue | BullMQ + Redis |
+| Auth | GitHub OAuth |
 
-Make sure you have installed:
-
-* Node.js
-* pnpm
-
-### Installation
-
-Clone the repository and install dependencies:
+## Getting started
 
 ```bash
-git clone <your-repository-url>
-cd CodeAtlas
 pnpm install
-```
-
-Build the shared package:
-
-```bash
 pnpm build:shared
 ```
 
-### Run the API
+Requires `.env` files in `apps/api` for MongoDB, GitHub OAuth, Gemini, and Redis credentials — see `apps/api/.env.example`.
 
 ```bash
-pnpm dev:api
+pnpm dev:api      # backend
+pnpm dev:web      # frontend
+pnpm dev:worker   # background indexing worker
 ```
 
-The API runs at:
-
-```text
-http://localhost:4000
-```
-
-### Run the Web App
-
-In a separate terminal:
+## Testing
 
 ```bash
-pnpm dev:web
+pnpm test         # unit tests (chunker, dependency graph resolution)
+cd apps/api && pnpm eval <repoId>   # retrieval quality eval
 ```
 
-The frontend runs at:
+## Known limitations
 
-```text
-http://localhost:5173
-```
-
-## 🧪 Current Demo
-
-The current development version includes a basic frontend-to-backend health check.
-
-The frontend communicates with the Express API through the Vite development proxy and displays the API status and timestamp.
-
-## 🛠️ Development
-
-Build the frontend:
-
-```bash
-pnpm --filter @codeatlas/web build
-```
-
-Build the shared package:
-
-```bash
-pnpm build:shared
-```
-
-Run the API in development mode:
-
-```bash
-pnpm dev:api
-```
-
-Run the web application in development mode:
-
-```bash
-pnpm dev:web
-```
-
-## 🗺️ Roadmap
-
-### Phase 1 — Foundation
-
-* [x] Monorepo setup
-* [x] React + Vite frontend
-* [x] Express API
-* [x] Shared TypeScript package
-* [x] Tailwind CSS + daisyUI
-* [x] Frontend/API connection
-* [ ] Initial dashboard UI
-
-### Phase 2 — Repository Explorer
-
-* [ ] GitHub repository connection
-* [ ] Repository metadata
-* [ ] File tree
-* [ ] Source code viewer
-* [ ] Code search
-
-### Phase 3 — AI Code Intelligence
-
-* [ ] Code embeddings
-* [ ] Semantic search
-* [ ] AI code explanations
-* [ ] RAG pipeline
-* [ ] Repository Q&A
-* [ ] Source references
-
-### Phase 4 — Production
-
-* [ ] Authentication
-* [ ] Background indexing
-* [ ] Database integration
-* [ ] Caching / queues
-* [ ] Production deployment
-* [ ] Monitoring and error handling
-
-## 🎯 Goal
-
-The goal of CodeAtlas is to create a practical developer tool that helps developers understand unfamiliar codebases faster by combining traditional code exploration with AI-powered search and explanations.
-
----
-
-Built with ❤️ while learning and experimenting with modern full-stack development.
+- Chunking is regex-based, not full AST parsing — reliable for JS/TS, imprecise for other languages
+- No conversation memory — each chat question is answered independently
+- Dependency graph resolves relative imports only, not path aliases or external packages
