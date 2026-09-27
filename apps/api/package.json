@@ -8,7 +8,8 @@
     "build": "tsc -b",
     "start": "node dist/index.js",
     "dev:worker": "tsx watch src/worker.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval": "tsx eval/run.ts"
   },
   "dependencies": {
     "@codeatlas/shared": "workspace:*",
