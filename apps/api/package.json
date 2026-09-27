@@ -7,7 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -b",
     "start": "node dist/index.js",
-    "dev:worker": "tsx watch src/worker.ts"
+    "dev:worker": "tsx watch src/worker.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@codeatlas/shared": "workspace:*",
@@ -30,6 +31,7 @@
     "@types/node": "^22.0.0",
     "@types/tar": "^7.0.87",
     "tsx": "^4.19.0",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.2"
   }
 }

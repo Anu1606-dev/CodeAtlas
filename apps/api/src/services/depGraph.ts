@@ -11,7 +11,7 @@ const IMPORT_REGEX =
 const RESOLVABLE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 const SCANNABLE_EXTENSIONS = new Set(RESOLVABLE_EXTENSIONS);
 
-function resolveImportPath(
+export function resolveImportPath(
   fromFileAbsDir: string,
   specifier: string,
   rootDir: string,

@@ -77,7 +77,7 @@ interface RawChunk {
 const TOP_LEVEL_BOUNDARY =
   /^(export\s+)?(default\s+)?(async\s+)?(function\b|class\b|interface\b|type\s+\w+\s*=|(const|let|var)\s+\w+\s*=\s*(async\s*)?[\w.]*\s*\()/;
 
-function chunkJsTsFile(content: string): RawChunk[] {
+export function chunkJsTsFile(content: string): RawChunk[] {
   const lines = content.split("\n");
   const chunks: RawChunk[] = [];
   let i = 0;
@@ -159,7 +159,7 @@ function chunkGenericFile(content: string): RawChunk[] {
 const LOW_VALUE_LINE =
   /^\s*(\/\/.*|\/\*.*\*\/|import\s.+|export\s*\{[^}]*\}\s*;?|export\s*\*\s*from\s*.+|export\s+default\s+\w+\s*;?)\s*$/;
 
-function isLowValueChunk(content: string): boolean {
+export function isLowValueChunk(content: string): boolean {
   const lines = content
     .split("\n")
     .map((l) => l.trim())
