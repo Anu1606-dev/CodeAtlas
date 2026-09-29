@@ -8,5 +8,6 @@ dist/
 desktop.ini
 
 .env
+.env.production
 
 *.tsbuildinfo
