@@ -9,6 +9,7 @@ import reposRouter from "./routes/repos.js";
 import indexingRouter from "./routes/indexing.js";
 import chatRouter from "./routes/chat.js";
 import webhooksRouter from "./routes/webhooks.js";
+import { startIndexWorker } from "./queue/startWorker.js";
 
 dotenv.config();
 
@@ -49,6 +50,10 @@ async function start(): Promise<void> {
   app.listen(PORT, () => {
     console.log(`CodeAtlas API running on http://localhost:${PORT}`);
   });
+  if (process.env.RUN_WORKER_INLINE === "true") {
+    startIndexWorker();
+    console.log("Indexing worker started in-process (RUN_WORKER_INLINE=true)");
+  }
 }
 
 start().catch((err) => {
