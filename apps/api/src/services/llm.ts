@@ -74,19 +74,33 @@ export async function generateGroundedAnswer(question: string, sources: SourceFo
   return generateWithRetry(ai, prompt);
 }
 
+export interface HistoryTurn {
+  role: "user" | "assistant";
+  text: string;
+}
+
 export async function* generateGroundedAnswerStream(
   question: string,
-  sources: SourceForPrompt[]
+  sources: SourceForPrompt[],
+  history: HistoryTurn[] = []
 ): AsyncGenerator<string> {
   const ai = getClient();
   const sourcesBlock = sources
     .map((s) => `[${s.index}] ${s.filePath} (lines ${s.lines})${s.symbolName ? ` — ${s.symbolName}` : ""}\n\`\`\`\n${s.content}\n\`\`\``)
     .join("\n\n");
-  const prompt = `Sources:\n\n${sourcesBlock}\n\nQuestion: ${question}`;
+  const currentTurnText = `Sources:\n\n${sourcesBlock}\n\nQuestion: ${question}`;
+
+  const contents = [
+    ...history.map((h) => ({
+      role: h.role === "assistant" ? "model" : "user",
+      parts: [{ text: h.text }],
+    })),
+    { role: "user", parts: [{ text: currentTurnText }] },
+  ];
 
   const response = await ai.models.generateContentStream({
     model: CHAT_MODEL,
-    contents: prompt,
+    contents,
     config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.2 },
   });
 

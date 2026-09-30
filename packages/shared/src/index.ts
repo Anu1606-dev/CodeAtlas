@@ -130,3 +130,7 @@ export interface RepoGraphResponse {
   nodes: GraphNode[];
   edges: GraphEdgeDTO[];
 }
+export interface ChatHistoryTurn {
+  role: "user" | "assistant";
+  text: string;
+}
