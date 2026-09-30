@@ -3,12 +3,25 @@ import { Repo } from "../models/Repo.js";
 import { Chunk } from "../models/Chunk.js";
 import { requireAuth, type AuthedRequest } from "../middleware/requireAuth.js";
 import { embedTexts } from "../services/embeddings.js";
-import { generateGroundedAnswerStream } from "../services/llm.js";
+import { generateGroundedAnswerStream, type HistoryTurn } from "../services/llm.js";
 import type { ChatCitation } from "@codeatlas/shared";
 
 const router = Router();
-
 const CITATIONS_MARKER = "\n<<<CITATIONS>>>\n";
+
+function parseHistory(raw: unknown): HistoryTurn[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(
+      (h): h is HistoryTurn =>
+        typeof h === "object" &&
+        h !== null &&
+        (h as HistoryTurn).role !== undefined &&
+        typeof (h as HistoryTurn).text === "string" &&
+        (h as HistoryTurn).text.trim().length > 0
+    )
+    .slice(-6);
+}
 
 router.post("/:repoId", requireAuth, async (req: AuthedRequest, res) => {
   const repo = await Repo.findOne({ _id: req.params.repoId, userId: req.userId });
@@ -23,8 +36,15 @@ router.post("/:repoId", requireAuth, async (req: AuthedRequest, res) => {
     return;
   }
 
+  const history = parseHistory(req.body?.history);
+
   try {
-    const [queryEmbedding] = await embedTexts([question], "RETRIEVAL_QUERY");
+    // Prepend the previous user turn so follow-up questions retrieve
+    // on-topic chunks instead of just the bare follow-up phrase.
+    const lastUserTurn = [...history].reverse().find((h) => h.role === "user");
+    const retrievalQuery = lastUserTurn ? `${lastUserTurn.text} ${question}` : question;
+
+    const [queryEmbedding] = await embedTexts([retrievalQuery], "RETRIEVAL_QUERY");
 
     const matches = await Chunk.aggregate([
       {
@@ -59,7 +79,7 @@ router.post("/:repoId", requireAuth, async (req: AuthedRequest, res) => {
     }));
 
     let fullText = "";
-    for await (const piece of generateGroundedAnswerStream(question, sources)) {
+    for await (const piece of generateGroundedAnswerStream(question, sources, history)) {
       fullText += piece;
       res.write(piece);
     }
