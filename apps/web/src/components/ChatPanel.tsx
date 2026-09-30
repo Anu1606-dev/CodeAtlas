@@ -58,6 +58,11 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
     const question = input.trim();
     if (!question || sending) return;
 
+    const historyForRequest = messages
+      .filter((m) => m.text.trim().length > 0)
+      .slice(-6)
+      .map((m) => ({ role: m.role, text: m.text }));
+
     setMessages((prev) => [...prev, { role: "user", text: question }, { role: "assistant", text: "" }]);
     setInput("");
     setSending(true);
@@ -67,7 +72,7 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question, history: historyForRequest }),
       });
       if (!res.ok || !res.body) throw new Error("Request failed");
 
@@ -79,7 +84,6 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
         const { done, value } = await reader.read();
         if (done) break;
         raw += decoder.decode(value, { stream: true });
-
         const markerIdx = raw.indexOf(CITATIONS_MARKER);
         updateLastAssistant({ text: markerIdx >= 0 ? raw.slice(0, markerIdx) : raw });
       }
@@ -90,7 +94,7 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
           const citations = JSON.parse(raw.slice(markerIdx + CITATIONS_MARKER.length)) as ChatCitation[];
           updateLastAssistant({ citations });
         } catch {
-          // malformed trailer — leave text as-is, no citations
+          // malformed trailer — leave text as-is
         }
       }
     } catch {
@@ -127,9 +131,8 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
               className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
             >
               <div
-                className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${
-                  m.role === "user" ? "bg-primary text-primary-foreground whitespace-pre-wrap" : "bg-muted text-foreground"
-                }`}
+                className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${m.role === "user" ? "bg-primary text-primary-foreground whitespace-pre-wrap" : "bg-muted text-foreground"
+                  }`}
               >
                 {isStreamingEmpty ? (
                   <Loader2 className="animate-spin" size={16} />
