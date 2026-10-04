@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { motion } from "motion/react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { ChatCitation } from "@codeatlas/shared";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,24 +18,27 @@ interface Message {
   citations?: ChatCitation[];
 }
 
-interface Segment {
-  type: "text" | "code";
-  content: string;
-  lang?: string;
-}
-
-function splitCodeFences(text: string): Segment[] {
-  const parts: Segment[] = [];
-  const regex = /```(\w+)?\n?([\s\S]*?)```/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) parts.push({ type: "text", content: text.slice(lastIndex, match.index) });
-    parts.push({ type: "code", content: match[2].trim(), lang: match[1] || "text" });
-    lastIndex = regex.lastIndex;
-  }
-  if (lastIndex < text.length) parts.push({ type: "text", content: text.slice(lastIndex) });
-  return parts;
+function MarkdownContent({ text }: { text: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        code({ className, children, ...props }) {
+          const match = /language-(\w+)/.exec(className || "");
+          if (match) {
+            return <CodeBlock code={String(children).replace(/\n$/, "")} lang={match[1]} />;
+          }
+          return (
+            <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props}>
+              {children}
+            </code>
+          );
+        },
+      }}
+    >
+      {text}
+    </ReactMarkdown>
+  );
 }
 
 export default function ChatPanel({ repoId }: { repoId: string }) {
@@ -112,7 +117,7 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
   }
 
   return (
-    <div className="flex flex-col w-full h-112 bg-card rounded-lg border border-border">
+    <div className="flex flex-col w-full h-[28rem] bg-card rounded-lg border border-border">
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
         {messages.length === 0 && (
           <p className="text-sm text-muted-foreground text-center mt-8">
@@ -131,20 +136,15 @@ export default function ChatPanel({ repoId }: { repoId: string }) {
               className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
             >
               <div
-                className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${m.role === "user" ? "bg-primary text-primary-foreground whitespace-pre-wrap" : "bg-muted text-foreground"
-                  }`}
+                className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${
+                  m.role === "user" ? "bg-primary text-primary-foreground whitespace-pre-wrap" : "bg-muted text-foreground"
+                }`}
               >
                 {isStreamingEmpty ? (
                   <Loader2 className="animate-spin" size={16} />
                 ) : m.role === "assistant" ? (
-                  <div className="flex flex-col gap-2">
-                    {splitCodeFences(m.text).map((seg, i) =>
-                      seg.type === "code" ? (
-                        <CodeBlock key={i} code={seg.content} lang={seg.lang} />
-                      ) : seg.content.trim() ? (
-                        <p key={i} className="whitespace-pre-wrap">{seg.content}</p>
-                      ) : null
-                    )}
+                  <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1">
+                    <MarkdownContent text={m.text} />
                   </div>
                 ) : (
                   m.text
