@@ -36,42 +36,12 @@ Rules:
 - If the sources don't contain enough information to answer confidently, say so plainly rather than guessing.
 - Be concise and technical. Assume the reader is a developer already familiar with this codebase.`;
 
-interface SourceForPrompt {
+export interface SourceForPrompt {
   index: number;
   filePath: string;
   lines: string;
   symbolName?: string;
   content: string;
-}
-
-async function generateWithRetry(ai: GoogleGenAI, prompt: string, attempt = 1): Promise<string> {
-  try {
-    const response = await ai.models.generateContent({
-      model: CHAT_MODEL,
-      contents: prompt,
-      config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.2 },
-    });
-    return response.text ?? "";
-  } catch (err) {
-    const status = getErrorStatus(err);
-    const isRetryable = status === 429 || status === 503;
-    if (isRetryable && attempt < MAX_RETRIES) {
-      const backoffMs = 2000 * 2 ** (attempt - 1); // 2s, 4s, 8s
-      console.warn(`Gemini request failed (status ${status}), retrying in ${backoffMs / 1000}s`);
-      await sleep(backoffMs);
-      return generateWithRetry(ai, prompt, attempt + 1);
-    }
-    throw err;
-  }
-}
-
-export async function generateGroundedAnswer(question: string, sources: SourceForPrompt[]): Promise<string> {
-  const ai = getClient();
-  const sourcesBlock = sources
-    .map((s) => `[${s.index}] ${s.filePath} (lines ${s.lines})${s.symbolName ? ` — ${s.symbolName}` : ""}\n\`\`\`\n${s.content}\n\`\`\``)
-    .join("\n\n");
-  const prompt = `Sources:\n\n${sourcesBlock}\n\nQuestion: ${question}`;
-  return generateWithRetry(ai, prompt);
 }
 
 export interface HistoryTurn {
@@ -98,13 +68,38 @@ export async function* generateGroundedAnswerStream(
     { role: "user", parts: [{ text: currentTurnText }] },
   ];
 
-  const response = await ai.models.generateContentStream({
-    model: CHAT_MODEL,
-    contents,
-    config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.2 },
-  });
+  let hasYielded = false;
 
-  for await (const chunk of response) {
-    if (chunk.text) yield chunk.text;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await ai.models.generateContentStream({
+        model: CHAT_MODEL,
+        contents,
+        config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.2 },
+      });
+
+      for await (const chunk of response) {
+        if (chunk.text) {
+          hasYielded = true;
+          yield chunk.text;
+        }
+      }
+      return;
+    } catch (err) {
+      const status = getErrorStatus(err);
+      const canRetry = (status === 429 || status === 503) && !hasYielded && attempt < MAX_RETRIES;
+
+      if (!canRetry) {
+        // If we already sent some real content, end gracefully rather than
+        // corrupt the stream with a duplicate retry. Only throw (triggering
+        // a clean error response) if literally nothing was sent yet.
+        if (hasYielded) return;
+        throw err;
+      }
+
+      const backoffMs = 1500 * attempt;
+      console.warn(`Gemini stream failed before any output (status ${status}), retrying in ${backoffMs / 1000}s (attempt ${attempt}/${MAX_RETRIES})`);
+      await sleep(backoffMs);
+    }
   }
 }
