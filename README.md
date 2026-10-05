@@ -2,7 +2,7 @@
 
 Ask natural-language questions about any GitHub repository and get grounded, cited answers — not guesses. Connect a repo, CodeAtlas clones and chunks it respecting function/class boundaries, embeds the code, and answers your questions with real file/line citations pulled from an Atlas Vector Search index.
 
-![CodeAtlas demo](docs/demo.gif)
+![CodeAtlas demo](https://code-atlas-blue.vercel.app/)
 
 ## Why this exists
 
