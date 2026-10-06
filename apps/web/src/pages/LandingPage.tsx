@@ -65,12 +65,6 @@ export default function LandingPage() {
             ))}
           </div>
 
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button size="lg" className="w-full gap-2" onClick={login}>
-              <GithubIcon />
-              Continue with GitHub
-            </Button>
-          </motion.div>
         </div>
       </div>
     </main>

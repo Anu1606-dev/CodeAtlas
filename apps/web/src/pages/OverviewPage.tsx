@@ -73,7 +73,7 @@ export default function OverviewPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto flex flex-col gap-6">
       <h1 className="font-heading text-2xl font-bold">{getGreeting()}, {user?.username} 👋</h1>
-      
+
       <Card>
         <CardContent className="flex items-center justify-between py-4">
           <div>
@@ -90,7 +90,7 @@ export default function OverviewPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {stats.map(({ label, value, icon: Icon }, i) => (
-          <motion.div key={label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: i * 0.05 }}>
+          <motion.div key={label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: i * 0.05 }} whileHover={{ y: -3 }}>
             <Card>
               <CardContent className="flex flex-col gap-1 py-4">
                 <Icon size={16} className="text-primary" />
@@ -100,7 +100,7 @@ export default function OverviewPage() {
             </Card>
           </motion.div>
         ))}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: stats.length * 0.05 }}>
+        <motion.div whileHover={{ y: -3 }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: stats.length * 0.05 }}>
           <Card>
             <CardContent className="flex flex-col gap-1 py-4">
               <CheckCircle2 size={16} className={repo.lastIndexedAt ? "text-green-500" : "text-muted-foreground"} />
