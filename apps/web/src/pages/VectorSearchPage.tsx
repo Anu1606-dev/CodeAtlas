@@ -32,7 +32,7 @@ export default function VectorSearchPage() {
   if (!selectedRepo) return <div className="p-8 text-center text-muted-foreground">No repo connected.</div>;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto flex flex-col gap-4">
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto flex flex-col gap-4">
       <h1 className="text-xl font-bold">Vector Search</h1>
       <p className="text-sm text-muted-foreground">Raw semantic search against indexed chunks — no LLM involved.</p>
       <div className="flex gap-2">

@@ -24,7 +24,7 @@ export default function FilesPage() {
   const filtered = files.filter((f) => f.filePath.toLowerCase().includes(query.toLowerCase()));
 
   return (
-    <div className="p-6 max-w-3xl mx-auto flex flex-col gap-4">
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto flex flex-col gap-4">
       <h1 className="text-xl font-bold">Files ({files.length})</h1>
       <Input placeholder="Search files..." value={query} onChange={(e) => setQuery(e.target.value)} />
       {files.length === 0 && <p className="text-sm text-muted-foreground">No files indexed yet — run indexing first.</p>}

@@ -27,7 +27,7 @@ export default function ChunkExplorerPage() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto flex flex-col gap-4">
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto flex flex-col gap-4">
       <h1 className="text-xl font-bold">Chunk Explorer{data ? ` (${data.total})` : ""}</h1>
       <Input placeholder="Filter by filename..." value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }} />
       {loading && <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>}
