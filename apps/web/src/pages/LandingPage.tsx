@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
 import Logo from "../components/Logo";
 import { Button } from "@/components/ui/button";
+import { motion } from "motion/react";
 
 const features = [
   { icon: MessageSquare, label: "Chat with your code" },
@@ -24,9 +25,16 @@ export default function LandingPage() {
 
   return (
     <main className="relative min-h-screen bg-background text-foreground flex flex-col overflow-hidden">
-      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
-
+      <motion.div
+        className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl"
+        animate={{ x: [0, 40, 0], y: [0, 30, 0] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl"
+        animate={{ x: [0, -30, 0], y: [0, -40, 0] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+      />
       <header className="relative flex items-center justify-between px-4 sm:px-6 py-4">
         <div className="flex items-center gap-2">
           <Logo className="h-7 w-auto" />
@@ -57,10 +65,12 @@ export default function LandingPage() {
             ))}
           </div>
 
-          <Button size="lg" className="w-full gap-2" onClick={login}>
-            <GithubIcon />
-            Continue with GitHub
-          </Button>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button size="lg" className="w-full gap-2" onClick={login}>
+              <GithubIcon />
+              Continue with GitHub
+            </Button>
+          </motion.div>
         </div>
       </div>
     </main>
