@@ -34,7 +34,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex flex-col h-full gap-6">
       <div className="flex items-center gap-2 px-1">
         <Logo className="h-7 w-auto" />
-        <span className="font-bold text-lg">CodeAtlas</span>
+        <span className="font-heading font-bold text-lg">CodeAtlas</span>
       </div>
 
       <RepoSwitcher />

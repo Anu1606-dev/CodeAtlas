@@ -37,7 +37,7 @@ export default function LandingPage() {
 
       <div className="relative flex-1 grid place-items-center px-4 sm:px-6 py-8">
         <div className="max-w-lg text-center flex flex-col items-center gap-6">
-          <h1 className="text-3xl sm:text-5xl font-bold leading-tight tracking-tight">
+          <h1 className="font-heading text-3xl sm:text-5xl font-bold leading-tight tracking-tight">
             Understand <br className="hidden sm:block" />
             <span className="text-primary">Your Codebase.</span>
           </h1>
