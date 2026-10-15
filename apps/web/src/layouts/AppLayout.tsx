@@ -15,13 +15,11 @@ const navItems = [
   { to: "/files", label: "Files", icon: FileText },
   { to: "/search", label: "Search", icon: Search },
 ];
-
 const devToolsItems = [
   { to: "/tools/chunks", label: "Chunks", icon: Boxes },
   { to: "/tools/vectors", label: "Vectors", icon: Database },
   { to: "/graph", label: "Graph", icon: Network },
 ];
-
 function navClass({ isActive }: { isActive: boolean }) {
   return `flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
     }`;
