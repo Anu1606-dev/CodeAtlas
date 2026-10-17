@@ -19,7 +19,6 @@ function PlaceholderPage({ title }: { title: string }) {
     </div>
   );
 }
-
 export default function App() {
   const { user, loading } = useAuth();
   if (loading) {
@@ -29,7 +28,6 @@ export default function App() {
       </div>
     );
   }
-
   if (!user) return <LandingPage />;
 
   return (
