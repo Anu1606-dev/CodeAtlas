@@ -2,7 +2,6 @@ import { Moon, Sun } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "../context/ThemeContext";
-
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
   return (
