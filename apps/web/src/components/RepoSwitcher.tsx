@@ -81,7 +81,6 @@ export default function RepoSwitcher() {
         )}
 
       </DropdownMenuContent>
-      
     </DropdownMenu>
   );
 }
