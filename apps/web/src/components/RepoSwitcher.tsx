@@ -68,6 +68,7 @@ export default function RepoSwitcher() {
               <p className="px-2 py-1.5 text-xs text-muted-foreground">All repos connected</p>
             )}
             {selectable.map((repo) => (
+
               <DropdownMenuItem
                 key={repo.githubRepoId}
                 onSelect={(e) => { e.preventDefault(); handleConnect(repo); }}
@@ -76,11 +77,13 @@ export default function RepoSwitcher() {
                 <span className="truncate flex-1">{repo.fullName}</span>
                 {connectingId === repo.githubRepoId && <Loader2 className="animate-spin" size={14} />}
               </DropdownMenuItem>
+              
             ))}
           </>
         )}
 
       </DropdownMenuContent>
+
     </DropdownMenu>
   );
 }
