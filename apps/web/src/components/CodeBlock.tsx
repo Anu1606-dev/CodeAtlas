@@ -9,10 +9,12 @@ export default function CodeBlock({ code, lang = "text" }: { code: string; lang?
   const [html, setHtml] = useState<string | null>(cache.get(key) ?? null);
 
   useEffect(() => {
+    
     if (cache.has(key)) {
       setHtml(cache.get(key)!);
       return;
     }
+
     let cancelled = false;
     codeToHtml(code, { lang, themes: THEMES })
       .catch(() => codeToHtml(code, { lang: "text", themes: THEMES }))
