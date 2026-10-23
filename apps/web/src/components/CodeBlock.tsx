@@ -9,7 +9,7 @@ export default function CodeBlock({ code, lang = "text" }: { code: string; lang?
   const [html, setHtml] = useState<string | null>(cache.get(key) ?? null);
 
   useEffect(() => {
-    
+
     if (cache.has(key)) {
       setHtml(cache.get(key)!);
       return;
@@ -24,9 +24,11 @@ export default function CodeBlock({ code, lang = "text" }: { code: string; lang?
           setHtml(result);
         }
       });
+
     return () => {
       cancelled = true;
     };
+    
   }, [key, code, lang]);
 
   if (!html) {
