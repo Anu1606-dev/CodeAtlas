@@ -10,7 +10,6 @@ interface RepoDetailProps {
   repo: ConnectedRepo;
   onRepoUpdated: (updated: ConnectedRepo) => void;
 }
-
 export default function RepoDetail({ repo, onRepoUpdated }: RepoDetailProps) {
   const [error, setError] = useState<string | null>(null);
   const [indexing, setIndexing] = useState(false);
