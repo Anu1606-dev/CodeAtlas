@@ -29,9 +29,7 @@ export default function App() {
       </div>
     );
   }
-  
   if (!user) return <LandingPage />;
-
   return (
     <RepoProvider>
       <Routes>
