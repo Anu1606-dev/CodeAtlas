@@ -5,7 +5,6 @@
 @import "@fontsource-variable/space-grotesk";
 @plugin "@tailwindcss/typography";
 @custom-variant dark (&:is(.dark *));
-
 @theme inline {
     --font-heading: 'Space Grotesk Variable', sans-serif;
     --font-sans: 'Inter Variable', sans-serif;
