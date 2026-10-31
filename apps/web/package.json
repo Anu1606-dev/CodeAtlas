@@ -3,8 +3,7 @@
   "name": "@codeatlas/web",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
-  "scripts": {
+  "type": "module",  "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
