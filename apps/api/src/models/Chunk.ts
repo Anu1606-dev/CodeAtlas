@@ -1,5 +1,4 @@
 import mongoose, { Schema, type Document, type Model, type Types } from "mongoose";
-
 export interface IChunk extends Document {
   repoId: Types.ObjectId;
   userId: Types.ObjectId;
@@ -12,7 +11,6 @@ export interface IChunk extends Document {
   embedding: number[];
   createdAt: Date;
 }
-
 const chunkSchema = new Schema<IChunk>({
   repoId: { type: Schema.Types.ObjectId, ref: "Repo", required: true, index: true },
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
@@ -25,6 +23,5 @@ const chunkSchema = new Schema<IChunk>({
   embedding: { type: [Number], required: true },
   createdAt: { type: Date, required: true, default: () => new Date() },
 });
-
 export const Chunk: Model<IChunk> =
   mongoose.models.Chunk || mongoose.model<IChunk>("Chunk", chunkSchema);
