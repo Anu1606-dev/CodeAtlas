@@ -11,6 +11,7 @@ export interface IChunk extends Document {
   embedding: number[];
   createdAt: Date;
 }
+
 const chunkSchema = new Schema<IChunk>({
   repoId: { type: Schema.Types.ObjectId, ref: "Repo", required: true, index: true },
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
@@ -23,5 +24,6 @@ const chunkSchema = new Schema<IChunk>({
   embedding: { type: [Number], required: true },
   createdAt: { type: Date, required: true, default: () => new Date() },
 });
+
 export const Chunk: Model<IChunk> =
   mongoose.models.Chunk || mongoose.model<IChunk>("Chunk", chunkSchema);
