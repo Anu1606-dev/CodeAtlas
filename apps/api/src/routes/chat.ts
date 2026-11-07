@@ -91,14 +91,18 @@ router.post("/:repoId", requireAuth, async (req: AuthedRequest, res) => {
 
     res.write(`${CITATIONS_MARKER}${JSON.stringify(citations)}`);
     res.end();
+
   } catch (err) {
+
     console.error("Chat failed:", err);
     if (!res.headersSent) {
       res.status(500).json({ error: "Failed to generate an answer" });
     } else {
       res.end();
     }
+    
   }
+
 });
 
 export default router;
