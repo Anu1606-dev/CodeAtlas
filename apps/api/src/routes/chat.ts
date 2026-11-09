@@ -59,10 +59,8 @@ router.post("/:repoId", requireAuth, async (req: AuthedRequest, res) => {
       },
       { $project: { _id: 0, filePath: 1, startLine: 1, endLine: 1, symbolName: 1, content: 1 } },
     ]);
-
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");
-
     if (matches.length === 0) {
       res.write("This repo doesn't seem to be indexed yet — try running indexing first.");
       res.write(`${CITATIONS_MARKER}${JSON.stringify([])}`);
