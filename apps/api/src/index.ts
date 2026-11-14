@@ -55,6 +55,7 @@ async function start(): Promise<void> {
     console.log("Indexing worker started in-process (RUN_WORKER_INLINE=true)");
   }
 }
+
 start().catch((err) => {
   console.error("Failed to start server:", err);
   process.exit(1);
